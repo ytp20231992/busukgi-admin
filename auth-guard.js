@@ -8,7 +8,7 @@
 // const SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_KAKAO_ID는 admin.js에서 전역으로 사용
 
 // Kakao SDK 설정
-const KAKAO_JS_KEY = 'acd2926a4589c862082be7210c5f142a'; // 카카오 JavaScript 키
+const KAKAO_JS_KEY = '3c9c0a87136909fcbdc02c3b429f00a5'; // 카카오 JavaScript 키
 
 // ============================================
 // 초기화
@@ -194,7 +194,7 @@ async function handleKakaoCallback() {
       },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: 'bf7d5c75f1dfb2a53e73ba3b47bbaa4b',
+        client_id: 'f100a5892b84f1c7b80ec313c76fb647',
         redirect_uri: window.location.origin + window.location.pathname,
         code: code,
       }),
