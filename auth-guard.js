@@ -158,116 +158,77 @@ function showLoginScreen() {
 }
 
 // ============================================
-// 카카오 로그인
+// 카카오 로그인 (팝업 방식)
 // ============================================
 function loginWithKakao() {
-  if (typeof Kakao === 'undefined') {
-    alert('카카오 SDK 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+  const KAKAO_REDIRECT_URI = 'https://ytp20231992.github.io/busukgi-auth/';
+  const KAKAO_REST_API_KEY = 'f100a5892b84f1c7b80ec313c76fb647';
+
+  const authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code`;
+
+  // 팝업 창 열기
+  const popup = window.open(authUrl, 'KakaoAdminLogin', 'width=500,height=600,popup=yes');
+
+  if (!popup) {
+    alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
     return;
   }
 
-  // 카카오 SDK v2 방식: authorize 사용
-  Kakao.Auth.authorize({
-    redirectUri: window.location.href
-  });
+  console.log('카카오 로그인 팝업 열림');
+
+  // postMessage 수신 대기
+  const messageHandler = async (event) => {
+    // 보안: origin 확인
+    if (event.origin !== 'https://ytp20231992.github.io') {
+      return;
+    }
+
+    if (event.data.type === 'KAKAO_LOGIN_SUCCESS') {
+      console.log('카카오 로그인 성공 메시지 수신:', event.data);
+
+      // 관리자 권한 확인
+      if (event.data.user.kakao_id !== ADMIN_KAKAO_ID) {
+        alert('❌ 관리자 권한이 없습니다.\\n\\n등록된 관리자만 접근할 수 있습니다.');
+        window.removeEventListener('message', messageHandler);
+        return;
+      }
+
+      // JWT 토큰과 사용자 정보 저장
+      localStorage.setItem('admin_kakao_id', event.data.user.kakao_id);
+      localStorage.setItem('admin_token', event.data.token);
+      localStorage.setItem('admin_name', event.data.user.nickname || '관리자');
+
+      // 리스너 제거
+      window.removeEventListener('message', messageHandler);
+
+      // 페이지 리로드
+      window.location.reload();
+
+    } else if (event.data.type === 'KAKAO_LOGIN_ERROR') {
+      console.error('카카오 로그인 실패:', event.data.error);
+      alert('로그인에 실패했습니다: ' + (event.data.error || '알 수 없는 오류'));
+      window.removeEventListener('message', messageHandler);
+    }
+  };
+
+  window.addEventListener('message', messageHandler);
+
+  // 팝업이 닫히면 리스너 제거
+  const popupCheckInterval = setInterval(() => {
+    if (popup.closed) {
+      clearInterval(popupCheckInterval);
+      window.removeEventListener('message', messageHandler);
+      console.log('팝업이 닫혔습니다');
+    }
+  }, 500);
 }
 
 // ============================================
-// URL에서 인증 코드 처리
+// URL에서 인증 코드 처리 (팝업 방식으로 변경되어 더 이상 사용 안 함)
 // ============================================
 async function handleKakaoCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-
-  if (!code) {
-    return false; // 인증 코드가 없으면 일반 플로우 진행
-  }
-
-  console.log('카카오 인증 코드 감지:', code);
-
-  try {
-    // 인증 코드를 토큰으로 교환
-    const tokenResponse = await fetch(`https://kauth.kakao.com/oauth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: 'f100a5892b84f1c7b80ec313c76fb647',
-        redirect_uri: window.location.origin + window.location.pathname,
-        code: code,
-      }),
-    });
-
-    const tokenData = await tokenResponse.json();
-
-    if (!tokenData.access_token) {
-      throw new Error('토큰 발급 실패');
-    }
-
-    console.log('토큰 발급 성공');
-
-    // 사용자 정보 가져오기
-    const userResponse = await fetch(`https://kapi.kakao.com/v2/user/me`, {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-      },
-    });
-
-    const userData = await userResponse.json();
-    console.log('사용자 정보:', userData);
-
-    const kakaoId = userData.id.toString();
-
-    // 관리자 ID 확인
-    if (kakaoId !== ADMIN_KAKAO_ID) {
-      alert('❌ 관리자 권한이 없습니다.\n\n등록된 관리자만 접근할 수 있습니다.');
-      // URL 파라미터 제거하고 로그인 화면으로
-      window.history.replaceState({}, document.title, window.location.pathname);
-      showLoginScreen();
-      return true;
-    }
-
-    console.log('관리자 권한 확인 완료, Supabase 인증 시작');
-
-    // Supabase auth-kakao-callback 호출하여 JWT 토큰 발급
-    const authResponse = await fetch(`${SUPABASE_URL}/functions/v1/auth-kakao-callback`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({
-        access_token: tokenData.access_token
-      }),
-    });
-
-    const authData = await authResponse.json();
-
-    if (!authResponse.ok) {
-      throw new Error(authData.error || 'Supabase 인증 실패');
-    }
-
-    console.log('Supabase 인증 성공:', authData);
-
-    // 로컬 스토리지에 저장 (JWT 토큰 사용)
-    localStorage.setItem('admin_kakao_id', kakaoId);
-    localStorage.setItem('admin_token', authData.token);  // JWT 토큰
-    localStorage.setItem('admin_name', userData.kakao_account?.profile?.nickname || '관리자');
-
-    // URL 파라미터 제거하고 리로드
-    window.history.replaceState({}, document.title, window.location.pathname);
-    window.location.reload();
-
-    return true;
-
-  } catch (error) {
-    console.error('카카오 로그인 처리 실패:', error);
-    alert('로그인 처리 중 오류가 발생했습니다.');
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return true;
-  }
+  // 팝업 방식을 사용하므로 URL 콜백 처리는 불필요
+  return false;
 }
 
 // ============================================
