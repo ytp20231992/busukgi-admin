@@ -229,9 +229,31 @@ async function handleKakaoCallback() {
       return true;
     }
 
-    // 로컬 스토리지에 저장
+    console.log('관리자 권한 확인 완료, Supabase 인증 시작');
+
+    // Supabase auth-kakao-callback 호출하여 JWT 토큰 발급
+    const authResponse = await fetch(`${SUPABASE_URL}/functions/v1/auth-kakao-callback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        access_token: tokenData.access_token
+      }),
+    });
+
+    const authData = await authResponse.json();
+
+    if (!authResponse.ok) {
+      throw new Error(authData.error || 'Supabase 인증 실패');
+    }
+
+    console.log('Supabase 인증 성공:', authData);
+
+    // 로컬 스토리지에 저장 (JWT 토큰 사용)
     localStorage.setItem('admin_kakao_id', kakaoId);
-    localStorage.setItem('admin_token', tokenData.access_token);
+    localStorage.setItem('admin_token', authData.token);  // JWT 토큰
     localStorage.setItem('admin_name', userData.kakao_account?.profile?.nickname || '관리자');
 
     // URL 파라미터 제거하고 리로드
