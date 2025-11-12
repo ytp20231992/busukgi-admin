@@ -1169,10 +1169,21 @@ function openEditUserModal(user) {
   document.getElementById('editEmail').value = user.email || '';
   document.getElementById('editPassword').value = '';
 
-  // 카카오 사용자면 username 비활성화
-  const isKakao = user.auth_type === 'kakao';
-  document.getElementById('editUsername').disabled = isKakao;
-  document.getElementById('editPassword').disabled = isKakao;
+  // 카카오 사용자면 username, password 비활성화
+  const isKakao = !!user.kakao_id;
+  const usernameField = document.getElementById('editUsername');
+  const passwordField = document.getElementById('editPassword');
+
+  usernameField.disabled = isKakao;
+  passwordField.disabled = isKakao;
+
+  if (isKakao) {
+    usernameField.placeholder = '(카카오 로그인 사용자)';
+    passwordField.placeholder = '(카카오 로그인 사용자는 비밀번호 변경 불가)';
+  } else {
+    usernameField.placeholder = '';
+    passwordField.placeholder = '변경하지 않으려면 비워두세요';
+  }
 
   openModal('editUserModal');
 }
@@ -1187,6 +1198,10 @@ async function handleEditUser(e) {
   const newPassword = document.getElementById('editPassword').value;
 
   try {
+    // 카카오 사용자 체크
+    const usernameField = document.getElementById('editUsername');
+    const isKakaoUser = usernameField.disabled;
+
     // 사용자 정보 업데이트
     if (username || nickname || email) {
       await callAdminAPI('update_user', {
@@ -1197,8 +1212,13 @@ async function handleEditUser(e) {
       });
     }
 
-    // 비밀번호 재설정 (입력된 경우만)
+    // 비밀번호 재설정 (입력된 경우만, 카카오 사용자 제외)
     if (newPassword) {
+      if (isKakaoUser) {
+        showError('카카오 로그인 사용자는 비밀번호를 변경할 수 없습니다.');
+        return;
+      }
+
       await callAdminAPI('reset_password', {
         userId,
         newPassword
