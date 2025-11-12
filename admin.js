@@ -239,12 +239,13 @@ async function loadAppSettings() {
     const config = result.config;
 
     if (config) {
-      document.getElementById('settingLatestVersion').value = config.latestVersion || '';
-      document.getElementById('settingMinVersion').value = config.minVersion || '';
-      document.getElementById('settingAnnouncement').value = config.announcement || '';
+      document.getElementById('settingMinVersion').value = config.min_version || '1.0.0';
+      document.getElementById('settingForceUpdate').checked = config.force_update || false;
+      document.getElementById('settingMaintenanceMode').checked = config.maintenance_mode || false;
+      document.getElementById('settingMaintenanceMessage').value = config.maintenance_message || '';
     }
   } catch (error) {
-    showError('앱 설정 로드 실패');
+    showError('앱 설정 로드 실패: ' + error.message);
   }
 }
 
@@ -503,10 +504,13 @@ async function handleAddSubscription(e) {
   }
 
   try {
+    // Convert days to months (rounded up)
+    const months = Math.ceil(parseInt(days) / 30);
+
     await callAdminAPI('add_subscription', {
-      user_id: userId,
+      userId: userId,
       plan: plan,
-      days: days
+      months: months
     });
 
     showSuccess('구독이 추가되었습니다.');
@@ -601,20 +605,22 @@ async function unblockUser(userId) {
 // App Settings
 // ============================================
 async function updateAppSettings() {
-  const latestVersion = document.getElementById('settingLatestVersion').value.trim();
   const minVersion = document.getElementById('settingMinVersion').value.trim();
-  const announcement = document.getElementById('settingAnnouncement').value.trim();
+  const forceUpdate = document.getElementById('settingForceUpdate').checked;
+  const maintenanceMode = document.getElementById('settingMaintenanceMode').checked;
+  const maintenanceMessage = document.getElementById('settingMaintenanceMessage').value.trim();
 
-  if (!latestVersion || !minVersion) {
-    showError('버전 정보를 입력해주세요.');
+  if (!minVersion) {
+    showError('최소 지원 버전을 입력해주세요.');
     return;
   }
 
   try {
     await callAdminAPI('update_app_config', {
-      latest_version: latestVersion,
-      min_version: minVersion,
-      announcement: announcement || null
+      minVersion: minVersion,
+      forceUpdate: forceUpdate,
+      maintenanceMode: maintenanceMode,
+      maintenanceMessage: maintenanceMessage || null
     });
 
     showSuccess('앱 설정이 저장되었습니다.');

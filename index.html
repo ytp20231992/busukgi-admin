@@ -568,16 +568,27 @@
       <div class="tab-content" id="tab-settings">
         <h3 style="margin-bottom: 16px;">앱 설정</h3>
         <div class="form-group">
-          <label>최신 버전</label>
-          <input type="text" id="settingLatestVersion" placeholder="예: 2.0.2">
-        </div>
-        <div class="form-group">
           <label>최소 지원 버전</label>
-          <input type="text" id="settingMinVersion" placeholder="예: 2.0.0">
+          <input type="text" id="settingMinVersion" placeholder="예: 1.0.0">
+          <small style="color: #999;">이 버전 미만의 앱은 업데이트를 요구합니다</small>
         </div>
         <div class="form-group">
-          <label>공지사항</label>
-          <textarea id="settingAnnouncement" placeholder="사용자에게 표시될 공지사항"></textarea>
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="settingForceUpdate">
+            <span>강제 업데이트 활성화</span>
+          </label>
+          <small style="color: #999;">활성화 시 최소 버전 미만 앱은 강제로 업데이트해야 합니다</small>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="settingMaintenanceMode">
+            <span>점검 모드</span>
+          </label>
+          <small style="color: #999;">활성화 시 앱 접속이 제한됩니다</small>
+        </div>
+        <div class="form-group">
+          <label>점검 메시지</label>
+          <textarea id="settingMaintenanceMessage" placeholder="점검 중 표시할 메시지" rows="3"></textarea>
         </div>
         <button class="action-btn primary" onclick="updateAppSettings()">💾 저장</button>
       </div>
