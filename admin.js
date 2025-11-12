@@ -68,6 +68,8 @@ function switchTab(tab) {
   // Load data for tab
   if (tab === 'users') {
     loadUsers();
+  } else if (tab === 'deleted') {
+    loadDeletedUsers();
   } else if (tab === 'groups') {
     loadGroups();
   } else if (tab === 'subscriptions') {
@@ -177,16 +179,27 @@ async function loadSubscriptions() {
     const result = await callAdminAPI('list_users');
     const users = result.users || [];
 
-    // Filter users with active subscriptions
-    const activeSubscriptions = users.filter(u =>
-      u.subscription && u.subscription.isActive
-    );
+    console.log('전체 사용자 수:', users.length);
+    console.log('샘플 사용자 데이터:', users[0]);
+
+    // Filter users with active subscriptions (구독 종료일이 미래인 경우만)
+    const activeSubscriptions = users.filter(u => {
+      const hasSubscription = u.plan && u.plan !== 'free';
+      const isActive = u.end_date && new Date(u.end_date) > new Date();
+
+      console.log(`User ${u.nickname || u.username}: plan=${u.plan}, status=${u.status}, end_date=${u.end_date}, isActive=${isActive}`);
+
+      return hasSubscription && isActive;
+    });
+
+    console.log('활성 구독 수:', activeSubscriptions.length);
 
     if (activeSubscriptions.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="icon">📭</div>
           <div class="message">활성 구독이 없습니다</div>
+          <div class="submessage">구독 종료일이 아직 남아있는 유료 구독이 없습니다</div>
         </div>
       `;
       return;
@@ -209,9 +222,11 @@ async function loadSubscriptions() {
     `;
 
     activeSubscriptions.forEach(user => {
-      const sub = user.subscription;
-      const startDate = new Date(sub.startDate).toLocaleDateString('ko-KR');
-      const endDate = new Date(sub.endDate).toLocaleDateString('ko-KR');
+      const startDate = user.start_date ? new Date(user.start_date).toLocaleDateString('ko-KR') : '-';
+      const endDate = user.end_date ? new Date(user.end_date).toLocaleDateString('ko-KR') : '-';
+
+      // Calculate days left
+      const daysLeft = user.end_date ? Math.ceil((new Date(user.end_date) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
 
       html += `
         <tr>
@@ -219,10 +234,10 @@ async function loadSubscriptions() {
             <strong>${escapeHtml(user.nickname || user.username || user.kakao_id)}</strong>
             ${user.email ? `<br><small>${escapeHtml(user.email)}</small>` : ''}
           </td>
-          <td><span class="badge ${sub.plan}">${sub.plan.toUpperCase()}</span></td>
+          <td><span class="badge ${user.plan}">${user.plan.toUpperCase()}</span></td>
           <td>${startDate}</td>
           <td>${endDate}</td>
-          <td>${sub.daysLeft}일</td>
+          <td>${daysLeft > 0 ? daysLeft + '일' : '만료됨'}</td>
           <td><span class="badge active">활성</span></td>
         </tr>
       `;
@@ -233,6 +248,116 @@ async function loadSubscriptions() {
 
   } catch (error) {
     showError('구독 목록 로드 실패');
+  }
+}
+
+// ============================================
+// Deleted Users Management
+// ============================================
+async function loadDeletedUsers() {
+  const container = document.getElementById('deletedUsersContent');
+  showLoading(true);
+
+  try {
+    const result = await callAdminAPI('list_deleted_users');
+    const deletedUsers = result.deletedUsers || [];
+
+    if (deletedUsers.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <div class="message">탈퇴한 회원이 없습니다</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Render table
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>사용자</th>
+            <th>가입일</th>
+            <th>마지막 로그인</th>
+            <th>탈퇴/차단일</th>
+            <th>사유</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    deletedUsers.forEach(item => {
+      const user = item.user;
+      if (!user) return; // 사용자 정보가 없으면 스킵
+
+      const displayName = user.nickname || user.username || user.kakao_id || '알 수 없음';
+      const email = user.email || '-';
+      const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '-';
+      const lastLogin = user.last_login ? new Date(user.last_login).toLocaleDateString('ko-KR') : '-';
+      const blockedAt = item.blocked_at ? new Date(item.blocked_at).toLocaleDateString('ko-KR') : '-';
+      const reason = item.reason || '-';
+
+      html += `
+        <tr>
+          <td>
+            <strong>${escapeHtml(displayName)}</strong>
+            ${email !== '-' ? `<br><small>${escapeHtml(email)}</small>` : ''}
+          </td>
+          <td>${createdAt}</td>
+          <td>${lastLogin}</td>
+          <td>${blockedAt}</td>
+          <td>${escapeHtml(reason)}</td>
+          <td>
+            <button class="action-btn success" onclick='restoreUser("${user.id}", "${escapeHtml(displayName)}")'>↩️ 복구</button>
+            <button class="action-btn danger" onclick='permanentDeleteUser("${user.id}", "${escapeHtml(displayName)}")'>🗑️ 영구삭제</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+
+  } catch (error) {
+    showError('탈퇴 회원 목록 로드 실패: ' + error.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function restoreUser(userId, displayName) {
+  if (!confirm(`"${displayName}" 사용자를 복구하시겠습니까?`)) {
+    return;
+  }
+
+  try {
+    await callAdminAPI('unblock_user', { userId });
+    showSuccess('사용자가 복구되었습니다.');
+    await loadDeletedUsers();
+  } catch (error) {
+    showError('사용자 복구 실패: ' + error.message);
+  }
+}
+
+async function permanentDeleteUser(userId, displayName) {
+  if (!confirm(`⚠️ 정말로 "${displayName}" 사용자를 영구 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 모든 데이터가 삭제됩니다.\n\n⚠️ 상거래법상 5년간 거래 기록을 보관해야 합니다.\n일반적으로는 복구 기능을 사용하는 것이 좋습니다.`)) {
+    return;
+  }
+
+  const confirmText = prompt('영구 삭제를 진행하려면 "영구삭제"를 입력하세요:');
+  if (confirmText !== '영구삭제') {
+    showError('삭제가 취소되었습니다.');
+    return;
+  }
+
+  try {
+    await callAdminAPI('delete_user', { userId, hardDelete: true });
+    showSuccess('사용자가 영구 삭제되었습니다.');
+    await loadDeletedUsers();
+  } catch (error) {
+    showError('영구 삭제 실패: ' + error.message);
   }
 }
 

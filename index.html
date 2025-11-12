@@ -522,6 +522,7 @@
     <div class="main-content">
       <div class="tabs">
         <button class="tab-btn active" data-tab="users">사용자 관리</button>
+        <button class="tab-btn" data-tab="deleted">탈퇴 회원</button>
         <button class="tab-btn" data-tab="groups">그룹 관리</button>
         <button class="tab-btn" data-tab="subscriptions">구독 관리</button>
         <button class="tab-btn" data-tab="settings">앱 설정</button>
@@ -557,6 +558,17 @@
       <div class="tab-content" id="tab-subscriptions">
         <h3 style="margin-bottom: 16px;">구독 현황</h3>
         <div id="subscriptionsContent"></div>
+      </div>
+
+      <!-- Tab: Deleted Users -->
+      <div class="tab-content" id="tab-deleted">
+        <h3 style="margin-bottom: 20px;">탈퇴 회원 관리</h3>
+        <div id="deletedUsersContent">
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <div class="message">탈퇴한 회원이 없습니다</div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Groups -->
