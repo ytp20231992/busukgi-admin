@@ -216,6 +216,7 @@ async function loadSubscriptions() {
             <th>종료일</th>
             <th>남은 기간</th>
             <th>상태</th>
+            <th>관리</th>
           </tr>
         </thead>
         <tbody>
@@ -228,17 +229,26 @@ async function loadSubscriptions() {
       // Calculate days left
       const daysLeft = user.end_date ? Math.ceil((new Date(user.end_date) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
 
+      // Subscription count
+      const subCount = user.subscription_count || 1;
+
       html += `
         <tr>
           <td>
             <strong>${escapeHtml(user.nickname || user.username || user.kakao_id)}</strong>
             ${user.email ? `<br><small>${escapeHtml(user.email)}</small>` : ''}
+            ${subCount > 1 ? `<br><small style="color: #667eea;">📋 총 ${subCount}회 구독</small>` : ''}
           </td>
           <td><span class="badge ${user.plan}">${user.plan.toUpperCase()}</span></td>
           <td>${startDate}</td>
           <td>${endDate}</td>
           <td>${daysLeft > 0 ? daysLeft + '일' : '만료됨'}</td>
           <td><span class="badge active">활성</span></td>
+          <td>
+            <button class="action-btn secondary" onclick='viewSubscriptionHistory("${user.user_id}", "${escapeHtml(user.nickname || user.username || user.kakao_id)}")'>📋 이력</button>
+            <button class="action-btn primary" onclick='openAddSubModal("${user.user_id}")'>➕ 연장</button>
+            <button class="action-btn danger" onclick='cancelSubscription("${user.subscription_id}", "${user.user_id}")'>❌ 취소</button>
+          </td>
         </tr>
       `;
     });
@@ -248,6 +258,114 @@ async function loadSubscriptions() {
 
   } catch (error) {
     showError('구독 목록 로드 실패');
+  }
+}
+
+// ============================================
+// Subscription History Management
+// ============================================
+async function viewSubscriptionHistory(userId, userName) {
+  const modal = document.getElementById('subscriptionHistoryModal');
+  const content = document.getElementById('subscriptionHistoryContent');
+
+  content.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">로딩 중...</p>';
+  openModal('subscriptionHistoryModal');
+
+  try {
+    const result = await callAdminAPI('get_subscription_history', { userId });
+    const history = result.history || [];
+
+    if (history.length === 0) {
+      content.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <div class="message">구독 이력이 없습니다</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <h4 style="margin-bottom: 16px;">${escapeHtml(userName)}님의 구독 이력</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>플랜</th>
+            <th>시작일</th>
+            <th>종료일</th>
+            <th>기간</th>
+            <th>상태</th>
+            <th>등록일</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    history.forEach((sub, index) => {
+      const startDate = new Date(sub.start_date).toLocaleDateString('ko-KR');
+      const endDate = new Date(sub.end_date).toLocaleDateString('ko-KR');
+      const createdAt = new Date(sub.created_at).toLocaleDateString('ko-KR');
+      const durationDays = Math.ceil((new Date(sub.end_date) - new Date(sub.start_date)) / (1000 * 60 * 60 * 24));
+
+      const statusClass = sub.status === 'active' ? 'active' :
+                         sub.status === 'cancelled' ? 'blocked' :
+                         sub.status === 'refunded' ? 'danger' : 'expired';
+      const statusText = sub.status === 'active' ? '활성' :
+                        sub.status === 'cancelled' ? '취소됨' :
+                        sub.status === 'refunded' ? '환불됨' : '만료';
+
+      html += `
+        <tr>
+          <td>${history.length - index}</td>
+          <td><span class="badge ${sub.plan}">${sub.plan.toUpperCase()}</span></td>
+          <td>${startDate}</td>
+          <td>${endDate}</td>
+          <td>${durationDays}일</td>
+          <td><span class="badge ${statusClass}">${statusText}</span></td>
+          <td>${createdAt}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+
+    // 통계 정보 추가
+    const totalDays = history
+      .filter(s => s.status !== 'refunded')
+      .reduce((sum, s) => sum + Math.ceil((new Date(s.end_date) - new Date(s.start_date)) / (1000 * 60 * 60 * 24)), 0);
+
+    html += `
+      <div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+        <strong>📊 통계</strong><br>
+        <small>총 구독 횟수: ${history.length}회 | 총 구독 일수: ${totalDays}일</small>
+      </div>
+    `;
+
+    content.innerHTML = html;
+
+  } catch (error) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">❌</div>
+        <div class="message">구독 이력을 불러올 수 없습니다</div>
+        <div class="submessage">${escapeHtml(error.message)}</div>
+      </div>
+    `;
+  }
+}
+
+async function cancelSubscription(subscriptionId, userId) {
+  if (!confirm('이 구독을 취소하시겠습니까?\n\n구독이 즉시 취소되며, 남은 기간은 유지됩니다.')) {
+    return;
+  }
+
+  try {
+    await callAdminAPI('cancel_subscription', { subscriptionId });
+    showSuccess('구독이 취소되었습니다.');
+    await loadSubscriptions();
+  } catch (error) {
+    showError('구독 취소 실패: ' + error.message);
   }
 }
 
