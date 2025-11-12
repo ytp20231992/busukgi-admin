@@ -363,7 +363,13 @@ async function cancelSubscription(subscriptionId, userId) {
   try {
     await callAdminAPI('cancel_subscription', { subscriptionId });
     showSuccess('구독이 취소되었습니다.');
-    await loadSubscriptions();
+
+    // 현재 탭에 따라 적절한 목록 새로고침
+    if (currentTab === 'subscriptions') {
+      await loadSubscriptions();
+    } else if (currentTab === 'users') {
+      await loadUsers();
+    }
   } catch (error) {
     showError('구독 취소 실패: ' + error.message);
   }
@@ -554,12 +560,17 @@ function renderUsersTable() {
     const groupName = user.group_name || '미지정';
     const groupColor = user.group_color || '#999';
 
+    // 구독 정보
+    const subCount = user.subscription_count || 0;
+    const hasActiveSubscription = user.subscription_id && user.status === 'active' && user.end_date && new Date(user.end_date) > new Date();
+
     html += `
       <tr>
         <td>
           <strong>${escapeHtml(displayName)}</strong>
           ${user.email ? `<br><small>${escapeHtml(user.email)}</small>` : ''}
           ${user.admin_memo ? `<br><small style="color: #999;">📝 ${escapeHtml(user.admin_memo)}</small>` : ''}
+          ${subCount > 0 ? `<br><small style="color: #667eea;">📋 구독 ${subCount}회</small>` : ''}
         </td>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -572,10 +583,18 @@ function renderUsersTable() {
         <td><span class="badge ${plan}">${plan.toUpperCase()}</span></td>
         <td><span class="badge ${status}">${getStatusText(status)}</span></td>
         <td>${createdAt}</td>
-        <td>
+        <td style="white-space: nowrap;">
           <button class="action-btn secondary" onclick='viewUser(${JSON.stringify(user)})'>👁️ 상세</button>
           <button class="action-btn" onclick='openEditUserModal(${JSON.stringify(user)})'>✏️ 수정</button>
-          <button class="action-btn primary" onclick='openAddSubModal("${user.user_id}")'>➕ 구독</button>
+          ${subCount > 0
+            ? `<button class="action-btn secondary" onclick='viewSubscriptionHistory("${user.user_id}", "${escapeHtml(displayName)}")'>📋 이력</button>`
+            : ''
+          }
+          <button class="action-btn primary" onclick='openAddSubModal("${user.user_id}")'>${hasActiveSubscription ? '➕ 연장' : '➕ 구독'}</button>
+          ${hasActiveSubscription
+            ? `<button class="action-btn danger" onclick='cancelSubscription("${user.subscription_id}", "${user.user_id}")'>❌ 취소</button>`
+            : ''
+          }
           <button class="action-btn success" onclick='openMemoModal("${user.user_id}", "${escapeHtml(user.admin_memo || '')}")'>📝 메모</button>
           ${user.is_blocked
             ? `<button class="action-btn success" onclick='unblockUser("${user.user_id}")'>✅ 해제</button>`
