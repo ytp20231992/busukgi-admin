@@ -922,19 +922,39 @@ async function deleteUser(userId, hardDelete = false) {
 // Deploy Time Display
 // ============================================
 function updateDeployTime() {
-  const now = new Date();
+  // 배포 시각 설정 (DEPLOY_TIMESTAMP 플레이스홀더가 있으면 현재 시각으로 대체)
   const deployEl = document.getElementById('deployTime');
-  if (deployEl) {
+  if (deployEl && deployEl.textContent === 'DEPLOY_TIMESTAMP') {
+    const now = new Date();
     const timeStr = now.toLocaleString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
       hour12: false
     });
     deployEl.textContent = timeStr;
-    deployEl.title = '페이지 최초 로드 시각 (GitHub Pages 배포 후 최대 5분 소요)';
+    deployEl.title = 'GitHub Pages 배포 시각 (최대 5분 소요)';
   }
+
+  // 현재 시각 업데이트 (1초마다)
+  function updateCurrentTime() {
+    const currentTimeEl = document.getElementById('currentTime');
+    if (currentTimeEl) {
+      const now = new Date();
+      const timeStr = now.toLocaleString('ko-KR', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      currentTimeEl.textContent = timeStr;
+    }
+  }
+
+  updateCurrentTime();
+  setInterval(updateCurrentTime, 1000);
 }
