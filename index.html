@@ -170,6 +170,29 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
+    .filter-btn {
+      padding: 8px 16px;
+      background: #f5f5f5;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .filter-btn.active {
+      background: #667eea;
+      border-color: #667eea;
+      color: white;
+    }
+
+    .filter-btn:hover:not(.active) {
+      background: rgba(102, 126, 234, 0.1);
+      border-color: #667eea;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -524,7 +547,6 @@
         <button class="tab-btn active" data-tab="users">사용자 관리</button>
         <button class="tab-btn" data-tab="deleted">탈퇴 회원</button>
         <button class="tab-btn" data-tab="groups">그룹 관리</button>
-        <button class="tab-btn" data-tab="subscriptions">구독 관리</button>
         <button class="tab-btn" data-tab="settings">앱 설정</button>
       </div>
 
@@ -534,6 +556,14 @@
           <input type="text" id="searchInput" placeholder="사용자 검색 (아이디, 닉네임, 이메일)">
           <button onclick="searchUsers()">🔍 검색</button>
           <button onclick="refreshData()" class="action-btn secondary">🔄 새로고침</button>
+        </div>
+
+        <!-- 구독 필터 버튼 -->
+        <div style="margin: 16px 0; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="filter-btn active" onclick="setSubscriptionFilter('all')">📊 전체</button>
+          <button class="filter-btn" onclick="setSubscriptionFilter('active')">✅ 활성 구독</button>
+          <button class="filter-btn" onclick="setSubscriptionFilter('expired')">⏰ 만료/취소</button>
+          <button class="filter-btn" onclick="setSubscriptionFilter('none')">📭 구독 없음</button>
         </div>
 
         <div class="error-box" id="errorBox"></div>
@@ -552,12 +582,6 @@
           </span>
           <button onclick="nextPage()">다음 ▶</button>
         </div>
-      </div>
-
-      <!-- Tab: Subscriptions -->
-      <div class="tab-content" id="tab-subscriptions">
-        <h3 style="margin-bottom: 16px;">구독 현황</h3>
-        <div id="subscriptionsContent"></div>
       </div>
 
       <!-- Tab: Deleted Users -->

@@ -72,8 +72,6 @@ function switchTab(tab) {
     loadDeletedUsers();
   } else if (tab === 'groups') {
     loadGroups();
-  } else if (tab === 'subscriptions') {
-    loadSubscriptions();
   } else if (tab === 'settings') {
     loadAppSettings();
   }
@@ -133,8 +131,6 @@ async function refreshData() {
     // Load current tab data
     if (currentTab === 'users') {
       await loadUsers();
-    } else if (currentTab === 'subscriptions') {
-      await loadSubscriptions();
     } else if (currentTab === 'settings') {
       await loadAppSettings();
     }
@@ -153,6 +149,8 @@ async function refreshData() {
   }
 }
 
+let currentSubscriptionFilter = 'all'; // all, active, expired, none
+
 async function loadUsers(search = '') {
   showLoading(true);
 
@@ -170,6 +168,18 @@ async function loadUsers(search = '') {
   } finally {
     showLoading(false);
   }
+}
+
+function setSubscriptionFilter(filter) {
+  currentSubscriptionFilter = filter;
+
+  // 필터 버튼 활성화 상태 업데이트
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+
+  renderUsersTable();
 }
 
 async function loadSubscriptions() {
@@ -262,7 +272,7 @@ async function loadSubscriptions() {
 }
 
 // ============================================
-// Subscription History Management
+// Subscription History Management (구독관리 탭 제거로 주석 처리)
 // ============================================
 async function viewSubscriptionHistory(userId, userName) {
   const modal = document.getElementById('subscriptionHistoryModal');
@@ -365,9 +375,7 @@ async function cancelSubscription(subscriptionId, userId) {
     showSuccess('구독이 취소되었습니다.');
 
     // 현재 탭에 따라 적절한 목록 새로고침
-    if (currentTab === 'subscriptions') {
-      await loadSubscriptions();
-    } else if (currentTab === 'users') {
+    if (currentTab === 'users') {
       await loadUsers();
     }
   } catch (error) {
@@ -514,12 +522,27 @@ function updateStats(stats) {
 function renderUsersTable() {
   const container = document.getElementById('usersTableContainer');
 
-  if (currentUsers.length === 0) {
+  // 필터링 적용
+  let filteredUsers = currentUsers;
+  if (currentSubscriptionFilter !== 'all') {
+    filteredUsers = currentUsers.filter(user => {
+      const hasActiveSubscription = user.subscription_id && user.status === 'active' && user.end_date && new Date(user.end_date) > new Date();
+      const hasExpiredSubscription = user.subscription_id && (!hasActiveSubscription);
+      const hasNoSubscription = !user.subscription_id || user.plan === 'free';
+
+      if (currentSubscriptionFilter === 'active') return hasActiveSubscription;
+      if (currentSubscriptionFilter === 'expired') return hasExpiredSubscription;
+      if (currentSubscriptionFilter === 'none') return hasNoSubscription;
+      return true;
+    });
+  }
+
+  if (filteredUsers.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <div class="icon">🔍</div>
         <div class="message">사용자를 찾을 수 없습니다</div>
-        <div class="submessage">검색어를 변경하거나 새로고침을 시도해보세요</div>
+        <div class="submessage">검색어를 변경하거나 필터를 조정해보세요</div>
       </div>
     `;
     document.getElementById('pagination').style.display = 'none';
@@ -527,10 +550,10 @@ function renderUsersTable() {
   }
 
   // Pagination
-  const totalPages = Math.ceil(currentUsers.length / USERS_PER_PAGE);
+  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
   const start = (currentPage - 1) * USERS_PER_PAGE;
   const end = start + USERS_PER_PAGE;
-  const pageUsers = currentUsers.slice(start, end);
+  const pageUsers = filteredUsers.slice(start, end);
 
   // Render table
   let html = `
@@ -616,6 +639,22 @@ function renderUsersTable() {
   });
 
   html += `</tbody></table>`;
+
+  // 통계 정보 추가
+  const totalCount = filteredUsers.length;
+  const activeCount = filteredUsers.filter(u => u.subscription_id && u.status === 'active' && u.end_date && new Date(u.end_date) > new Date()).length;
+  const expiredCount = filteredUsers.filter(u => u.subscription_id && !(u.status === 'active' && u.end_date && new Date(u.end_date) > new Date())).length;
+  const noneCount = filteredUsers.filter(u => !u.subscription_id || u.plan === 'free').length;
+
+  html += `
+    <div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; display: flex; gap: 20px; justify-content: space-between;">
+      <div><strong>📊 전체:</strong> ${totalCount}명</div>
+      <div><strong style="color: #4caf50;">✅ 활성 구독:</strong> ${activeCount}명</div>
+      <div><strong style="color: #ff9800;">⏰ 만료/취소:</strong> ${expiredCount}명</div>
+      <div><strong style="color: #999;">📭 구독 없음:</strong> ${noneCount}명</div>
+    </div>
+  `;
+
   container.innerHTML = html;
 
   // Update pagination
