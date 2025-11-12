@@ -302,11 +302,12 @@ function renderUsersTable() {
 
   pageUsers.forEach(user => {
     const displayName = user.nickname || user.username || user.kakao_id;
-    const authType = user.auth_type === 'kakao' ? 'kakao' : 'password';
+    // 카카오 ID가 있으면 카카오 로그인, username이 있으면 ID/PW 로그인
+    const authType = user.kakao_id ? 'kakao' : 'password';
     const sub = user.subscription || {};
-    const plan = sub.plan || 'free';
-    const status = user.is_blocked ? 'blocked' : (sub.isActive ? 'active' : 'expired');
-    const createdAt = new Date(user.created_at).toLocaleDateString('ko-KR');
+    const plan = user.plan || 'free';
+    const status = user.is_blocked ? 'blocked' : (user.status === 'active' ? 'active' : 'expired');
+    const createdAt = new Date(user.user_created_at).toLocaleDateString('ko-KR');
     const groupName = user.group_name || '미지정';
     const groupColor = user.group_color || '#999';
 
