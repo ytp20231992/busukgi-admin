@@ -723,21 +723,6 @@ function renderUsersTable() {
 
   html += `</tbody></table>`;
 
-  // 통계 정보 추가
-  const totalCount = filteredUsers.length;
-  const activeCount = filteredUsers.filter(u => u.subscription_id && u.status === 'active' && u.end_date && new Date(u.end_date) > new Date()).length;
-  const expiredCount = filteredUsers.filter(u => u.subscription_id && !(u.status === 'active' && u.end_date && new Date(u.end_date) > new Date())).length;
-  const noneCount = filteredUsers.filter(u => !u.subscription_id || u.plan === 'free').length;
-
-  html += `
-    <div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; display: flex; gap: 20px; justify-content: space-between;">
-      <div><strong>📊 전체:</strong> ${totalCount}명</div>
-      <div><strong style="color: #4caf50;">✅ 활성 구독:</strong> ${activeCount}명</div>
-      <div><strong style="color: #ff9800;">⏰ 만료/취소:</strong> ${expiredCount}명</div>
-      <div><strong style="color: #999;">📭 구독 없음:</strong> ${noneCount}명</div>
-    </div>
-  `;
-
   container.innerHTML = html;
 
   // Update pagination
