@@ -132,8 +132,8 @@ async function refreshData() {
 
   try {
     // Load stats
-    const stats = await callAdminAPI('get_stats');
-    updateStats(stats);
+    const result = await callAdminAPI('get_stats');
+    updateStats(result.stats);
 
     // Load current tab data
     if (currentTab === 'users') {
