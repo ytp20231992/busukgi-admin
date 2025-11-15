@@ -372,14 +372,34 @@ async function viewSubscriptionHistory(userId, userName) {
   }
 }
 
-async function cancelSubscription(userId) {
-  if (!confirm('예약된 구독을 취소하시겠습니까?\n\n현재 구독은 유지되며, 예약 구독만 취소됩니다.')) {
+// 예약 구독만 취소
+async function cancelScheduledSubscription(userId) {
+  if (!confirm('예약 구독을 취소하시겠습니까?\n\n현재 구독은 유지되며, 예약 구독만 취소됩니다.')) {
     return;
   }
 
   try {
     await callAdminAPI('cancel_scheduled_subscription', { userId });
     showSuccess('예약 구독이 취소되었습니다.');
+
+    // 현재 탭에 따라 적절한 목록 새로고침
+    if (currentTab === 'users') {
+      await loadUsers();
+    }
+  } catch (error) {
+    showError('예약 구독 취소 실패: ' + error.message);
+  }
+}
+
+// 모든 구독 취소 (현재 + 예약)
+async function cancelAllSubscriptions(userId) {
+  if (!confirm('⚠️ 모든 구독을 취소하시겠습니까?\n\n현재 구독과 예약 구독이 모두 취소됩니다.\n구독 기간 만료 후 서비스가 종료됩니다.')) {
+    return;
+  }
+
+  try {
+    await callAdminAPI('cancel_subscription', { userId });
+    showSuccess('모든 구독이 취소되었습니다.');
 
     // 현재 탭에 따라 적절한 목록 새로고침
     if (currentTab === 'users') {
@@ -706,8 +726,12 @@ function renderUsersTable() {
             : ''
           }
           <button class="action-btn primary" onclick='openAddSubModal("${user.user_id}")'>${hasActiveSubscription ? '➕ 연장' : '➕ 구독'}</button>
+          ${hasScheduled
+            ? `<button class="action-btn warning" onclick='cancelScheduledSubscription("${user.user_id}")' style="background: #ff9800;">🗑️ 예약취소</button>`
+            : ''
+          }
           ${hasActiveSubscription
-            ? `<button class="action-btn danger" onclick='cancelSubscription("${user.user_id}")'>❌ 취소</button>`
+            ? `<button class="action-btn danger" onclick='cancelAllSubscriptions("${user.user_id}")'>❌ 모두취소</button>`
             : ''
           }
           <button class="action-btn success" data-user-id="${user.user_id}" data-memo="${escapeHtml(user.admin_memo || '')}" onclick='openMemoModalFromButton(this)'>📝 메모</button>
