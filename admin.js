@@ -105,7 +105,14 @@ async function callAdminAPI(action, data = {}) {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || 'API 호출 실패');
+      console.error('❌ API 오류 상세:', {
+        status: response.status,
+        statusText: response.statusText,
+        result: result,
+        action: action,
+        data: data
+      });
+      throw new Error(result.error || result.details || `API 호출 실패 (${response.status})`);
     }
 
     return result;
@@ -492,6 +499,7 @@ async function loadDeletedUsers() {
             <td>${hadPaid}</td>
             <td>${retentionUntil}</td>
             <td>
+              <button class="action-btn primary" onclick='viewDeletedUserSubscription("${item.original_user_id}", "${escapeHtml(item.masked_email || '탈퇴 회원')}".replace(/&quot;/g, "\\""))' style="margin-right: 4px;">📊 구독이력</button>
               <button class="action-btn danger" onclick='permanentDeleteUser("${item.original_user_id}", "탈퇴 회원")'>🗑️ 영구삭제</button>
             </td>
           </tr>
@@ -514,6 +522,11 @@ async function loadDeletedUsers() {
   } finally {
     showLoading(false);
   }
+}
+
+async function viewDeletedUserSubscription(userId, maskedEmail) {
+  const displayName = maskedEmail || '탈퇴한 회원';
+  await viewSubscriptionHistory(userId, displayName);
 }
 
 async function restoreUser(userId, displayName) {
@@ -644,10 +657,22 @@ function renderUsersTable() {
     const subCount = user.subscription_count || 0;
     const hasActiveSubscription = user.subscription_id && user.status === 'active' && user.end_date && new Date(user.end_date) > new Date();
 
-    // 구독 기간 정보
+    // 현재 구독 기간 정보
     const startDate = user.start_date ? new Date(user.start_date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) : null;
     const endDate = user.end_date ? new Date(user.end_date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) : null;
     const daysLeft = hasActiveSubscription && user.end_date ? Math.ceil((new Date(user.end_date) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+
+    // 예약 구독 정보
+    const scheduledSub = user.scheduled_subscription;
+    const hasScheduled = scheduledSub && scheduledSub.status === 'active';
+    const scheduledStartDate = hasScheduled ? new Date(scheduledSub.start_date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) : null;
+    const scheduledEndDate = hasScheduled ? new Date(scheduledSub.end_date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) : null;
+
+    // 총 남은 기간 계산 (현재 구독 + 예약 구독)
+    let totalDaysLeft = daysLeft;
+    if (hasScheduled && scheduledSub.end_date) {
+      totalDaysLeft = Math.ceil((new Date(scheduledSub.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+    }
 
     html += `
       <tr>
@@ -667,8 +692,9 @@ function renderUsersTable() {
         <td><span class="badge ${authType}">${authType === 'kakao' ? '카카오' : 'ID/PW'}</span></td>
         <td>
           <span class="badge ${plan}">${plan.toUpperCase()}</span>
-          ${hasActiveSubscription && startDate && endDate ? `<br><small style="color: #666; white-space: nowrap;">${startDate} ~ ${endDate}</small>` : ''}
-          ${daysLeft !== null && daysLeft > 0 ? `<br><small style="color: ${daysLeft <= 7 ? '#f44336' : '#4caf50'};">D-${daysLeft}</small>` : ''}
+          ${hasActiveSubscription && startDate && endDate ? `<br><small style="color: #666; white-space: nowrap;">현재: ${startDate} ~ ${endDate} (D-${daysLeft})</small>` : ''}
+          ${hasScheduled && scheduledStartDate && scheduledEndDate ? `<br><small style="color: #666; white-space: nowrap;">예약: ${scheduledStartDate} ~ ${scheduledEndDate}</small>` : ''}
+          ${totalDaysLeft !== null && totalDaysLeft > 0 ? `<br><small style="color: ${totalDaysLeft <= 7 ? '#f44336' : '#4caf50'};">총: D-${totalDaysLeft}일</small>` : ''}
         </td>
         <td><span class="badge ${status}">${getStatusText(status)}</span></td>
         <td>${createdAt}</td>
@@ -948,16 +974,20 @@ async function handleBlockUser(e) {
     return;
   }
 
+  console.log('🔍 차단 요청 데이터:', { user_id: userId, reason: reason });
+
   try {
-    await callAdminAPI('block_user', {
+    const result = await callAdminAPI('block_user', {
       user_id: userId,
       reason: reason
     });
 
+    console.log('✅ 차단 성공:', result);
     showSuccess('사용자가 차단되었습니다.');
     closeModal();
     await refreshData();
   } catch (error) {
+    console.error('❌ 차단 실패 상세:', error);
     showError('차단 실패: ' + error.message);
   }
 }
