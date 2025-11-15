@@ -975,7 +975,7 @@ function viewUser(user) {
   html += `
     <div class="user-detail-row">
       <div class="label">가입일</div>
-      <div class="value">${new Date(user.created_at).toLocaleString('ko-KR')}</div>
+      <div class="value">${user.user_created_at ? new Date(user.user_created_at).toLocaleString('ko-KR') : (user.created_at ? new Date(user.created_at).toLocaleString('ko-KR') : '-')}</div>
     </div>
     <div class="user-detail-row">
       <div class="label">관리자 메모</div>
