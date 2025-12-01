@@ -1015,7 +1015,7 @@
                 <span id="btnRunPnuMatchText">▶ 배치 실행</span>
               </button>
               <button class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="runPnuQuickMatch()" id="btnRunPnuQuick">
-                <span id="btnRunPnuQuickText">⚡ 전체 500건</span>
+                <span id="btnRunPnuQuickText">⚡ 자동 매칭</span>
               </button>
               <button class="action-btn secondary" onclick="loadPnuStats()">🔄 새로고침</button>
             </div>
@@ -1025,6 +1025,13 @@
               <input type="checkbox" id="pnuDryRun">
               <span style="font-size: 12px; color: var(--text-secondary);">Dry Run (실제 업데이트 안 함, 테스트용)</span>
             </label>
+          </div>
+          <!-- 기록 초기화 버튼 -->
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+            <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">기록 초기화 (재매칭 대상으로):</span>
+            <button class="action-btn" style="font-size: 11px; padding: 4px 8px; background: var(--danger);" onclick="clearMatchingRecords('clear_failures')">🗑️ 실패</button>
+            <button class="action-btn" style="font-size: 11px; padding: 4px 8px; background: var(--warning);" onclick="clearMatchingRecords('clear_ambiguous')">🗑️ 중복</button>
+            <button class="action-btn" style="font-size: 11px; padding: 4px 8px; background: #6366f1;" onclick="clearMatchingRecords('clear_all')">🗑️ 전체</button>
           </div>
         </div>
 

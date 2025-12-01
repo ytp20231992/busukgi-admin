@@ -1783,70 +1783,154 @@ async function runPnuBatchMatch() {
   }
 }
 
-// 전체 500건 빠른 매칭 (지역/연도 필터 없이)
+// 자동 반복 매칭 상태
+let pnuAutoMatchRunning = false;
+
+// 전체 자동 반복 매칭 (남은 건이 없을 때까지)
 async function runPnuQuickMatch() {
-  if (!confirm('지역/연도 필터 없이 전체 데이터에서 500건을 매칭합니다.\n계속하시겠습니까?')) {
+  const btn = document.getElementById('btnRunPnuQuick');
+  const btnText = document.getElementById('btnRunPnuQuickText');
+  const resultBox = document.getElementById('pnuResultBox');
+  const resultContent = document.getElementById('pnuResultContent');
+
+  // 이미 실행 중이면 중지
+  if (pnuAutoMatchRunning) {
+    pnuAutoMatchRunning = false;
+    btnText.textContent = '⏹️ 중지 중...';
     return;
   }
 
-  // 버튼 비활성화
-  const btn = document.getElementById('btnRunPnuQuick');
-  const btnText = document.getElementById('btnRunPnuQuickText');
-  btn.disabled = true;
-  btnText.textContent = '⏳ 실행 중...';
+  if (!confirm('남은 데이터가 없을 때까지 100건씩 자동으로 매칭합니다.\n(버튼을 다시 클릭하면 중지됩니다)\n\n시작하시겠습니까?')) {
+    return;
+  }
 
-  // 결과 박스 초기화
-  const resultBox = document.getElementById('pnuResultBox');
-  const resultContent = document.getElementById('pnuResultContent');
+  pnuAutoMatchRunning = true;
+  btnText.textContent = '⏹️ 중지';
+  btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+
   resultBox.style.display = 'block';
   resultBox.style.borderColor = 'var(--accent-cyan)';
-  resultContent.innerHTML = '<p style="color: var(--text-secondary);">⚡ 전체 500건 매칭 진행 중... (시간이 걸릴 수 있습니다)</p>';
+
+  // 누적 통계
+  let totalMatched = 0;
+  let totalAmbiguous = 0;
+  let totalFailed = 0;
+  let batchCount = 0;
 
   try {
-    const result = await callPnuMatcherAPI('batch_match', {
-      limit: 500,
-      dry_run: false
-    });
-
-    // 결과 표시
-    if (result.success) {
-      resultBox.style.borderColor = 'var(--success)';
-
-      const r = result.result || {};
-      let html = `
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${r.matched || 0}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">매칭 성공</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${r.ambiguous || 0}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">중복 후보</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${r.failed || 0}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">실패</div>
-          </div>
+    while (pnuAutoMatchRunning) {
+      batchCount++;
+      resultContent.innerHTML = `
+        <p style="color: var(--text-secondary);">⚡ 배치 #${batchCount} 진행 중... (100건씩 처리)</p>
+        <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+          누적: 성공 ${totalMatched} / 중복 ${totalAmbiguous} / 실패 ${totalFailed}
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary);">✅ 전체 500건 매칭 완료</p>
+        <p style="margin-top: 8px; font-size: 11px; color: var(--warning);">⏹️ 버튼을 클릭하면 중지됩니다</p>
       `;
 
-      resultContent.innerHTML = html;
+      const result = await callPnuMatcherAPI('batch_match', {
+        limit: 100,
+        dry_run: false
+      });
 
-      // 통계 새로고침
-      await loadPnuStats();
+      if (!result.success) {
+        throw new Error(result.error || '알 수 없는 오류');
+      }
 
-    } else {
-      resultBox.style.borderColor = 'var(--danger)';
-      resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(result.error || '알 수 없는 오류')}</p>`;
+      const r = result.result || {};
+      const batchTotal = (r.matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
+
+      // 처리된 건이 0이면 완료
+      if (batchTotal === 0) {
+        pnuAutoMatchRunning = false;
+        resultBox.style.borderColor = 'var(--success)';
+        resultContent.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+              <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
+              <div style="font-size: 10px; color: var(--text-secondary);">총 매칭 성공</div>
+            </div>
+            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+              <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
+              <div style="font-size: 10px; color: var(--text-secondary);">총 중복 후보</div>
+            </div>
+            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+              <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
+              <div style="font-size: 10px; color: var(--text-secondary);">총 실패</div>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: var(--success);">✅ 전체 매칭 완료! (${batchCount}회 배치 실행)</p>
+        `;
+        break;
+      }
+
+      // 누적 통계 업데이트
+      totalMatched += r.matched || 0;
+      totalAmbiguous += r.ambiguous || 0;
+      totalFailed += r.failed || 0;
+
+      // 실시간 통계 표시
+      resultContent.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 성공</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 중복</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 실패</div>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary);">⏳ 배치 #${batchCount} 완료, 다음 배치 준비 중...</p>
+        <p style="margin-top: 4px; font-size: 11px; color: var(--warning);">⏹️ 버튼을 클릭하면 중지됩니다</p>
+      `;
+
+      // 1초 대기 후 다음 배치 (API 부하 방지)
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
+    // 사용자가 중지한 경우
+    if (!pnuAutoMatchRunning && batchCount > 0) {
+      resultBox.style.borderColor = 'var(--warning)';
+      resultContent.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 성공</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 중복</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">누적 실패</div>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: var(--warning);">⏹️ 사용자에 의해 중지됨 (${batchCount}회 배치 실행)</p>
+      `;
+    }
+
+    // 통계 새로고침
+    await loadPnuStats();
+
   } catch (error) {
+    pnuAutoMatchRunning = false;
     resultBox.style.borderColor = 'var(--danger)';
-    resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(error.message)}</p>`;
+    resultContent.innerHTML = `
+      <p style="color: var(--danger);">❌ 오류: ${escapeHtml(error.message)}</p>
+      <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+        배치 #${batchCount}에서 중단됨 | 누적: 성공 ${totalMatched} / 중복 ${totalAmbiguous} / 실패 ${totalFailed}
+      </div>
+    `;
   } finally {
-    btn.disabled = false;
-    btnText.textContent = '⚡ 전체 500건';
+    pnuAutoMatchRunning = false;
+    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    btnText.textContent = '⚡ 자동 매칭';
   }
 }
 
@@ -1866,6 +1950,36 @@ async function retryFailedMatches() {
     }
   } catch (error) {
     showError('재시도 실패: ' + error.message);
+  }
+}
+
+// 실패/중복 기록 초기화 (재매칭 대상으로 만들기)
+async function clearMatchingRecords(type) {
+  const messages = {
+    'clear_failures': '실패 기록을 모두 삭제하시겠습니까?\n(삭제된 건들은 다시 매칭 대상이 됩니다)',
+    'clear_ambiguous': '중복 후보 기록을 모두 삭제하시겠습니까?\n(삭제된 건들은 다시 매칭 대상이 됩니다)',
+    'clear_all': '실패 + 중복 후보 기록을 모두 삭제하시겠습니까?\n(삭제된 건들은 다시 매칭 대상이 됩니다)'
+  };
+
+  if (!confirm(messages[type] || '정말 삭제하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    const result = await callPnuMatcherAPI(type);
+
+    if (result.success) {
+      if (type === 'clear_all') {
+        showSuccess(`삭제 완료: 실패 ${result.deleted_failures || 0}건, 중복 ${result.deleted_ambiguous || 0}건`);
+      } else {
+        showSuccess(`삭제 완료: ${result.deleted || 0}건`);
+      }
+      await loadPnuStats();
+    } else {
+      showError('삭제 실패: ' + (result.error || '알 수 없는 오류'));
+    }
+  } catch (error) {
+    showError('삭제 실패: ' + error.message);
   }
 }
 
