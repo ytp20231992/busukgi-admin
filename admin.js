@@ -1783,6 +1783,73 @@ async function runPnuBatchMatch() {
   }
 }
 
+// 전체 500건 빠른 매칭 (지역/연도 필터 없이)
+async function runPnuQuickMatch() {
+  if (!confirm('지역/연도 필터 없이 전체 데이터에서 500건을 매칭합니다.\n계속하시겠습니까?')) {
+    return;
+  }
+
+  // 버튼 비활성화
+  const btn = document.getElementById('btnRunPnuQuick');
+  const btnText = document.getElementById('btnRunPnuQuickText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ 실행 중...';
+
+  // 결과 박스 초기화
+  const resultBox = document.getElementById('pnuResultBox');
+  const resultContent = document.getElementById('pnuResultContent');
+  resultBox.style.display = 'block';
+  resultBox.style.borderColor = 'var(--accent-cyan)';
+  resultContent.innerHTML = '<p style="color: var(--text-secondary);">⚡ 전체 500건 매칭 진행 중... (시간이 걸릴 수 있습니다)</p>';
+
+  try {
+    const result = await callPnuMatcherAPI('batch_match', {
+      limit: 500,
+      dry_run: false
+    });
+
+    // 결과 표시
+    if (result.success) {
+      resultBox.style.borderColor = 'var(--success)';
+
+      const r = result.result || {};
+      let html = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${r.matched || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">매칭 성공</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${r.ambiguous || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">중복 후보</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${r.failed || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">실패</div>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary);">✅ 전체 500건 매칭 완료</p>
+      `;
+
+      resultContent.innerHTML = html;
+
+      // 통계 새로고침
+      await loadPnuStats();
+
+    } else {
+      resultBox.style.borderColor = 'var(--danger)';
+      resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(result.error || '알 수 없는 오류')}</p>`;
+    }
+
+  } catch (error) {
+    resultBox.style.borderColor = 'var(--danger)';
+    resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(error.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '⚡ 전체 500건';
+  }
+}
+
 async function retryFailedMatches() {
   if (!confirm('실패한 매칭 건들을 재시도하시겠습니까?\n(재시도 횟수 3회 미만인 건만 처리됩니다)')) {
     return;
