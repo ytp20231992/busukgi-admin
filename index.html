@@ -897,6 +897,7 @@
         <button class="tab-btn active" data-tab="users">사용자 관리</button>
         <button class="tab-btn" data-tab="deleted">탈퇴 회원</button>
         <button class="tab-btn" data-tab="groups">그룹 관리</button>
+        <button class="tab-btn" data-tab="pnu-matcher">PNU 매칭</button>
         <button class="tab-btn" data-tab="settings">앱 설정</button>
       </div>
 
@@ -952,6 +953,103 @@
           <button class="action-btn primary" onclick="showAddGroupModal()">➕ 그룹 추가</button>
         </div>
         <div id="groupsContent"></div>
+      </div>
+
+      <!-- Tab: PNU Matcher -->
+      <div class="tab-content" id="tab-pnu-matcher">
+        <h3 style="margin-bottom: 20px;">토지 실거래가 PNU 매칭</h3>
+
+        <!-- 매칭 통계 카드 -->
+        <div class="stats-grid" style="margin-bottom: 24px;">
+          <div class="stat-card">
+            <div class="label">전체 토지 거래</div>
+            <div class="value" id="pnuStatTotal" style="font-size: 32px;">-</div>
+            <div class="subvalue">마스킹된 거래 건수</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">매칭 완료</div>
+            <div class="value" id="pnuStatMatched" style="font-size: 32px;">-</div>
+            <div class="subvalue">PNU 자동 입력 완료</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">중복 후보</div>
+            <div class="value" id="pnuStatAmbiguous" style="font-size: 32px;">-</div>
+            <div class="subvalue">수동 확인 필요</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">매칭 실패</div>
+            <div class="value" id="pnuStatFailed" style="font-size: 32px;">-</div>
+            <div class="subvalue">API 오류 또는 불일치</div>
+          </div>
+        </div>
+
+        <!-- 매칭률 프로그레스 바 -->
+        <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: var(--accent-cyan);">매칭률</span>
+            <span id="pnuMatchRate" style="font-weight: 700; color: var(--success);">--%</span>
+          </div>
+          <div style="height: 8px; background: var(--border-color); overflow: hidden;">
+            <div id="pnuMatchRateBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-cyan), var(--success)); transition: width 0.5s ease;"></div>
+          </div>
+        </div>
+
+        <!-- 배치 실행 컨트롤 -->
+        <div style="margin-bottom: 24px; padding: 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+          <h4 style="margin-bottom: 16px; color: var(--accent-cyan);">배치 매칭 실행</h4>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="display: block; margin-bottom: 4px;">시군구 코드 (선택)</label>
+              <input type="text" id="pnuLawdCd" placeholder="예: 41630" style="width: 120px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="display: block; margin-bottom: 4px;">거래 연도 (선택)</label>
+              <input type="number" id="pnuDealYear" placeholder="예: 2024" style="width: 100px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="display: block; margin-bottom: 4px;">처리 건수</label>
+              <input type="number" id="pnuLimit" value="100" min="1" max="500" style="width: 80px;">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="action-btn primary" onclick="runPnuBatchMatch()" id="btnRunPnuMatch">
+                <span id="btnRunPnuMatchText">▶ 배치 실행</span>
+              </button>
+              <button class="action-btn secondary" onclick="loadPnuStats()">🔄 새로고침</button>
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="pnuDryRun">
+              <span style="font-size: 12px; color: var(--text-secondary);">Dry Run (실제 업데이트 안 함, 테스트용)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 실행 결과 -->
+        <div id="pnuResultBox" style="display: none; margin-bottom: 24px; padding: 16px; border: 2px solid var(--border-color);">
+          <h4 style="margin-bottom: 12px; color: var(--accent-cyan);">실행 결과</h4>
+          <div id="pnuResultContent"></div>
+        </div>
+
+        <!-- 중복 후보 / 실패 목록 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- 중복 후보 -->
+          <div style="padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 12px; color: var(--warning);">중복 후보 (수동 확인 필요)</h4>
+            <div id="pnuAmbiguousList" style="max-height: 300px; overflow-y: auto;">
+              <p style="color: var(--text-secondary); font-size: 12px;">데이터 없음</p>
+            </div>
+          </div>
+
+          <!-- 매칭 실패 -->
+          <div style="padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 12px; color: var(--danger);">매칭 실패</h4>
+            <div id="pnuFailedList" style="max-height: 300px; overflow-y: auto;">
+              <p style="color: var(--text-secondary); font-size: 12px;">데이터 없음</p>
+            </div>
+            <button class="action-btn" style="margin-top: 12px;" onclick="retryFailedMatches()">🔄 실패 건 재시도</button>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Settings -->

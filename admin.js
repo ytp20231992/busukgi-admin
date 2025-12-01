@@ -72,6 +72,8 @@ function switchTab(tab) {
     loadDeletedUsers();
   } else if (tab === 'groups') {
     loadGroups();
+  } else if (tab === 'pnu-matcher') {
+    loadPnuStats();
   } else if (tab === 'settings') {
     loadAppSettings();
   }
@@ -1557,6 +1559,248 @@ function updateDeployTime() {
 
 let currentLoginHistoryPage = 1;
 let currentLoginHistoryUserId = null;
+
+// ============================================
+// PNU Matcher Functions
+// ============================================
+
+async function callPnuMatcherAPI(action, data = {}) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/land-pnu-matcher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: action,
+        ...data
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('PNU Matcher API 오류:', result);
+      throw new Error(result.error || `API 호출 실패 (${response.status})`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('PNU Matcher API 오류:', error);
+    throw error;
+  }
+}
+
+async function loadPnuStats() {
+  try {
+    const result = await callPnuMatcherAPI('get_status');
+
+    if (result.stats) {
+      const stats = result.stats;
+
+      // 통계 업데이트
+      document.getElementById('pnuStatTotal').textContent = formatNumber(stats.total_land_transactions || 0);
+      document.getElementById('pnuStatMatched').textContent = formatNumber(stats.matched_count || 0);
+      document.getElementById('pnuStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
+      document.getElementById('pnuStatFailed').textContent = formatNumber(stats.failed_count || 0);
+
+      // 매칭률 업데이트
+      const matchRate = stats.match_rate || 0;
+      document.getElementById('pnuMatchRate').textContent = `${matchRate}%`;
+      document.getElementById('pnuMatchRateBar').style.width = `${matchRate}%`;
+    }
+
+    // 중복 후보 목록
+    if (result.ambiguous && result.ambiguous.length > 0) {
+      renderAmbiguousList(result.ambiguous);
+    } else {
+      document.getElementById('pnuAmbiguousList').innerHTML =
+        '<p style="color: var(--text-secondary); font-size: 12px;">미해결 중복 후보 없음</p>';
+    }
+
+    // 실패 목록
+    if (result.failed && result.failed.length > 0) {
+      renderFailedList(result.failed);
+    } else {
+      document.getElementById('pnuFailedList').innerHTML =
+        '<p style="color: var(--text-secondary); font-size: 12px;">매칭 실패 건 없음</p>';
+    }
+
+  } catch (error) {
+    showError('PNU 매칭 통계 로드 실패: ' + error.message);
+  }
+}
+
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function renderAmbiguousList(items) {
+  const container = document.getElementById('pnuAmbiguousList');
+
+  let html = '<table style="width: 100%; font-size: 11px;">';
+  html += '<thead><tr><th>거래ID</th><th>지번</th><th>후보수</th><th>등록일</th></tr></thead><tbody>';
+
+  items.slice(0, 20).forEach(item => {
+    const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+    html += `
+      <tr>
+        <td>${item.transaction_id}</td>
+        <td>${escapeHtml(item.jibun || '-')}</td>
+        <td><span class="badge warning">${item.candidate_count}건</span></td>
+        <td>${createdAt}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+
+  if (items.length > 20) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderFailedList(items) {
+  const container = document.getElementById('pnuFailedList');
+
+  let html = '<table style="width: 100%; font-size: 11px;">';
+  html += '<thead><tr><th>거래ID</th><th>실패 사유</th><th>재시도</th></tr></thead><tbody>';
+
+  items.slice(0, 20).forEach(item => {
+    const reasonText = {
+      'no_ldcode': '법정동코드 없음',
+      'api_error': 'API 오류',
+      'no_match': '매칭 불가'
+    }[item.fail_reason] || item.fail_reason;
+
+    html += `
+      <tr>
+        <td>${item.transaction_id}</td>
+        <td><span class="badge danger">${reasonText}</span></td>
+        <td>${item.retry_count || 0}회</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+
+  if (items.length > 20) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  }
+
+  container.innerHTML = html;
+}
+
+async function runPnuBatchMatch() {
+  const lawdCd = document.getElementById('pnuLawdCd').value.trim();
+  const dealYear = document.getElementById('pnuDealYear').value.trim();
+  const limit = parseInt(document.getElementById('pnuLimit').value) || 100;
+  const dryRun = document.getElementById('pnuDryRun').checked;
+
+  // 버튼 비활성화
+  const btn = document.getElementById('btnRunPnuMatch');
+  const btnText = document.getElementById('btnRunPnuMatchText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ 실행 중...';
+
+  // 결과 박스 초기화
+  const resultBox = document.getElementById('pnuResultBox');
+  const resultContent = document.getElementById('pnuResultContent');
+  resultBox.style.display = 'block';
+  resultBox.style.borderColor = 'var(--accent-cyan)';
+  resultContent.innerHTML = '<p style="color: var(--text-secondary);">매칭 진행 중... (시간이 걸릴 수 있습니다)</p>';
+
+  try {
+    const params = {
+      limit: limit,
+      dry_run: dryRun
+    };
+
+    if (lawdCd) params.lawd_cd = lawdCd;
+    if (dealYear) params.deal_year = parseInt(dealYear);
+
+    const result = await callPnuMatcherAPI('batch_match', params);
+
+    // 결과 표시
+    if (result.success) {
+      resultBox.style.borderColor = 'var(--success)';
+
+      let html = `
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--accent-cyan);">${result.processed || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">처리됨</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${result.matched || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">매칭 성공</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${result.ambiguous || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">중복 후보</div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${result.failed || 0}</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">실패</div>
+          </div>
+        </div>
+      `;
+
+      if (dryRun) {
+        html += '<p style="color: var(--warning); font-size: 12px;">⚠️ Dry Run 모드: 실제 데이터는 변경되지 않았습니다.</p>';
+      }
+
+      if (result.details && result.details.length > 0) {
+        html += '<details style="margin-top: 12px;"><summary style="cursor: pointer; color: var(--accent-cyan);">상세 결과 보기</summary>';
+        html += '<div style="max-height: 200px; overflow-y: auto; margin-top: 8px; font-size: 11px;">';
+        result.details.forEach(d => {
+          const statusIcon = d.status === 'matched' ? '✅' : d.status === 'ambiguous' ? '⚠️' : '❌';
+          html += `<div style="padding: 4px 0; border-bottom: 1px solid var(--border-color);">${statusIcon} ID:${d.id} ${d.jibun || ''} - ${d.status}</div>`;
+        });
+        html += '</div></details>';
+      }
+
+      resultContent.innerHTML = html;
+
+      // 통계 새로고침
+      await loadPnuStats();
+
+    } else {
+      resultBox.style.borderColor = 'var(--danger)';
+      resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(result.error || '알 수 없는 오류')}</p>`;
+    }
+
+  } catch (error) {
+    resultBox.style.borderColor = 'var(--danger)';
+    resultContent.innerHTML = `<p style="color: var(--danger);">❌ 오류: ${escapeHtml(error.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '▶ 배치 실행';
+  }
+}
+
+async function retryFailedMatches() {
+  if (!confirm('실패한 매칭 건들을 재시도하시겠습니까?\n(재시도 횟수 3회 미만인 건만 처리됩니다)')) {
+    return;
+  }
+
+  try {
+    const result = await callPnuMatcherAPI('retry_failed');
+
+    if (result.success) {
+      showSuccess(`재시도 완료: ${result.retried || 0}건 처리됨`);
+      await loadPnuStats();
+    } else {
+      showError('재시도 실패: ' + (result.error || '알 수 없는 오류'));
+    }
+  } catch (error) {
+    showError('재시도 실패: ' + error.message);
+  }
+}
 
 async function viewLoginHistory(userId, displayName, page = 1) {
   currentLoginHistoryUserId = userId;
