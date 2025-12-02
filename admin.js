@@ -862,6 +862,7 @@ function renderUsersTable() {
           <button class="action-btn primary" onclick='openSubscriptionManageModal(${JSON.stringify(user)})'>💳 구독</button>
           <button class="action-btn success" data-user-id="${user.user_id}" data-memo="${escapeHtml(user.admin_memo || '')}" onclick='openMemoModalFromButton(this)'>📝 메모</button>
           <button class="action-btn" style="background:#9c27b0;color:white;" onclick='viewLoginHistory("${user.user_id}", "${escapeHtml(user.nickname || user.username || user.kakao_id)}")'>🔐 로그인</button>
+          ${user.latest_version ? `<span class="badge" style="background:#424242;color:#9e9e9e;font-size:10px;margin-left:4px;" title="마지막 사용 버전">v${escapeHtml(user.latest_version)}</span>` : ''}
         </td>
       </tr>
     `;
