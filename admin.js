@@ -76,6 +76,8 @@ function switchTab(tab) {
     loadPnuStats();
   } else if (tab === 'lookup-stats') {
     loadLookupStats();
+  } else if (tab === 'session-stats') {
+    loadSessionStats();
   } else if (tab === 'settings') {
     loadAppSettings();
   }
@@ -1779,12 +1781,24 @@ async function runPnuBatchMatch() {
 // 자동 반복 매칭 상태
 let pnuAutoMatchRunning = false;
 
+// 실행 결과 카드 업데이트 헬퍼
+function updatePnuResultCard(matched, ambiguous, failed, status, borderColor = 'var(--accent-cyan)') {
+  const card = document.getElementById('pnuResultCard');
+  const statusEl = document.getElementById('pnuResultStatus');
+
+  card.style.display = 'block';
+  card.style.borderColor = borderColor;
+
+  document.getElementById('pnuResultMatched').textContent = matched;
+  document.getElementById('pnuResultAmbiguous').textContent = ambiguous;
+  document.getElementById('pnuResultFailed').textContent = failed;
+  statusEl.textContent = status;
+}
+
 // 전체 자동 반복 매칭 (남은 건이 없을 때까지)
 async function runPnuQuickMatch() {
   const btn = document.getElementById('btnRunPnuQuick');
   const btnText = document.getElementById('btnRunPnuQuickText');
-  const resultBox = document.getElementById('pnuResultBox');
-  const resultContent = document.getElementById('pnuResultContent');
 
   // 이미 실행 중이면 중지
   if (pnuAutoMatchRunning) {
@@ -1801,9 +1815,6 @@ async function runPnuQuickMatch() {
   btnText.textContent = '⏹️ 중지';
   btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
 
-  resultBox.style.display = 'block';
-  resultBox.style.borderColor = 'var(--accent-cyan)';
-
   // 누적 통계
   let totalMatched = 0;
   let totalAmbiguous = 0;
@@ -1813,13 +1824,7 @@ async function runPnuQuickMatch() {
   try {
     while (pnuAutoMatchRunning) {
       batchCount++;
-      resultContent.innerHTML = `
-        <p style="color: var(--text-secondary);">⚡ 배치 #${batchCount} 진행 중... (100건씩 처리)</p>
-        <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-          누적: 성공 ${totalMatched} / 중복 ${totalAmbiguous} / 실패 ${totalFailed}
-        </div>
-        <p style="margin-top: 8px; font-size: 11px; color: var(--warning);">⏹️ 버튼을 클릭하면 중지됩니다</p>
-      `;
+      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⚡ 배치 #${batchCount} 진행 중...`);
 
       const result = await callPnuMatcherAPI('batch_match', {
         limit: 100,
@@ -1837,24 +1842,7 @@ async function runPnuQuickMatch() {
       // 처리된 건이 0이면 완료
       if (batchTotal === 0) {
         pnuAutoMatchRunning = false;
-        resultBox.style.borderColor = 'var(--success)';
-        resultContent.innerHTML = `
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
-            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-              <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
-              <div style="font-size: 10px; color: var(--text-secondary);">총 매칭 성공</div>
-            </div>
-            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-              <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
-              <div style="font-size: 10px; color: var(--text-secondary);">총 중복 후보</div>
-            </div>
-            <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-              <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
-              <div style="font-size: 10px; color: var(--text-secondary);">총 실패</div>
-            </div>
-          </div>
-          <p style="font-size: 12px; color: var(--success);">✅ 전체 매칭 완료! (${batchCount}회 배치 실행)</p>
-        `;
+        updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `✅ 완료! (${batchCount}회)`, 'var(--success)');
         break;
       }
 
@@ -1864,24 +1852,7 @@ async function runPnuQuickMatch() {
       totalFailed += r.failed || 0;
 
       // 실시간 통계 표시
-      resultContent.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 성공</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 중복</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 실패</div>
-          </div>
-        </div>
-        <p style="font-size: 12px; color: var(--text-secondary);">⏳ 배치 #${batchCount} 완료, 다음 배치 준비 중...</p>
-        <p style="margin-top: 4px; font-size: 11px; color: var(--warning);">⏹️ 버튼을 클릭하면 중지됩니다</p>
-      `;
+      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⏳ 배치 #${batchCount} 완료`);
 
       // 1초 대기 후 다음 배치 (API 부하 방지)
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1889,24 +1860,7 @@ async function runPnuQuickMatch() {
 
     // 사용자가 중지한 경우
     if (!pnuAutoMatchRunning && batchCount > 0) {
-      resultBox.style.borderColor = 'var(--warning)';
-      resultContent.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalMatched}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 성공</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalAmbiguous}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 중복</div>
-          </div>
-          <div style="padding: 12px; background: var(--bg-primary); text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--danger);">${totalFailed}</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">누적 실패</div>
-          </div>
-        </div>
-        <p style="font-size: 12px; color: var(--warning);">⏹️ 사용자에 의해 중지됨 (${batchCount}회 배치 실행)</p>
-      `;
+      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⏹️ 중지됨 (${batchCount}회)`, 'var(--warning)');
     }
 
     // 통계 새로고침
@@ -1914,13 +1868,7 @@ async function runPnuQuickMatch() {
 
   } catch (error) {
     pnuAutoMatchRunning = false;
-    resultBox.style.borderColor = 'var(--danger)';
-    resultContent.innerHTML = `
-      <p style="color: var(--danger);">❌ 오류: ${escapeHtml(error.message)}</p>
-      <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-        배치 #${batchCount}에서 중단됨 | 누적: 성공 ${totalMatched} / 중복 ${totalAmbiguous} / 실패 ${totalFailed}
-      </div>
-    `;
+    updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `❌ 오류: ${error.message}`, 'var(--danger)');
   } finally {
     pnuAutoMatchRunning = false;
     btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
@@ -2385,4 +2333,190 @@ async function viewUserLookupHistory(userId, nickname) {
     console.error('조회 내역 로드 실패:', error);
     alert('조회 내역을 불러올 수 없습니다: ' + error.message);
   }
+}
+
+// ============================================
+// Session Stats (세션 통계)
+// ============================================
+async function loadSessionStats() {
+  const loading = document.getElementById('sessionStatsLoading');
+  loading.style.display = 'inline';
+
+  try {
+    const token = localStorage.getItem('admin_token');
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        admin_token: token,
+        action: 'get_session_stats'
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'API 오류');
+    }
+
+    // 일별 활성 유저 렌더링
+    renderDailyActiveUsers(data.dailyActiveUsers || []);
+
+    // 유저별 세션 통계 렌더링
+    renderUserSessionStats(data.userSessionStats || []);
+
+    // 익스텐션 버전별 사용 현황 렌더링
+    renderExtensionVersionStats(data.extensionVersionStats || []);
+
+  } catch (error) {
+    console.error('세션 통계 로드 실패:', error);
+    document.getElementById('dailyActiveUsersContent').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">❌</div>
+        <div class="message">데이터를 불러올 수 없습니다</div>
+        <div class="submessage">${escapeHtml(error.message)}</div>
+      </div>
+    `;
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderDailyActiveUsers(days) {
+  const container = document.getElementById('dailyActiveUsersContent');
+
+  if (!days || days.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">세션 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">날짜</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">로그인 유저</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">비로그인 유저</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">총 세션</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  days.forEach(day => {
+    const dateStr = new Date(day.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px; font-weight: 600;">${dateStr}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${(day.logged_in_users || 0).toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--text-secondary);">${(day.anonymous_users || 0).toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--success);">${(day.total_sessions || 0).toLocaleString()}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderUserSessionStats(users) {
+  const container = document.getElementById('userSessionStatsContent');
+
+  if (!users || users.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">유저 세션 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">유저</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">세션 수</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">첫 세션</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">마지막 세션</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">주 사용 버전</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  users.forEach(user => {
+    const firstSession = user.first_session ? new Date(user.first_session).toLocaleDateString('ko-KR') : '-';
+    const lastSession = user.last_session ? new Date(user.last_session).toLocaleDateString('ko-KR') : '-';
+    const userId = user.user_id ? user.user_id.substring(0, 8) + '...' : '-';
+
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px; font-family: monospace; font-size: 11px;">${userId}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-cyan); font-weight: 600;">${(user.session_count || 0).toLocaleString()}</td>
+        <td style="padding: 8px; color: var(--text-secondary);">${firstSession}</td>
+        <td style="padding: 8px; color: var(--success);">${lastSession}</td>
+        <td style="padding: 8px;"><span class="badge pro">${escapeHtml(user.most_used_version || '-')}</span></td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderExtensionVersionStats(versions) {
+  const container = document.getElementById('extensionVersionStatsContent');
+
+  if (!versions || versions.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">버전 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">버전</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">세션 수</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">사용자 수</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">마지막 사용</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  versions.forEach((ver, idx) => {
+    const lastUsed = ver.last_used_at ? new Date(ver.last_used_at).toLocaleDateString('ko-KR') : '-';
+    const isLatest = idx === 0;
+    const badgeClass = isLatest ? 'active' : 'free';
+
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px;">
+          <span class="badge ${badgeClass}">${escapeHtml(ver.extension_version || 'unknown')}</span>
+          ${isLatest ? '<span style="margin-left: 8px; color: var(--success); font-size: 10px;">LATEST</span>' : ''}
+        </td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-magenta); font-weight: 600;">${(ver.session_count || 0).toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${(ver.unique_users || 0).toLocaleString()}</td>
+        <td style="padding: 8px; color: var(--text-secondary);">${lastUsed}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }

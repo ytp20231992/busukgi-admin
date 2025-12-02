@@ -861,7 +861,7 @@
         <div class="admin-name" id="adminName">-</div>
         <div id="lastSync">-</div>
         <div style="font-size: 12px; color: #999; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
-          <div>빌드: <span id="deployTime">v20251202.1</span></div>
+          <div>빌드: <span id="deployTime">#0626</span></div>
           <div>현재: <span id="currentTime">-</span></div>
         </div>
       </div>
@@ -899,6 +899,7 @@
         <button class="tab-btn" data-tab="groups">그룹 관리</button>
         <button class="tab-btn" data-tab="pnu-matcher">PNU 매칭</button>
         <button class="tab-btn" data-tab="lookup-stats">조회 통계</button>
+        <button class="tab-btn" data-tab="session-stats">세션 통계</button>
         <button class="tab-btn" data-tab="settings">앱 설정</button>
       </div>
 
@@ -987,6 +988,27 @@
             <div class="value" id="pnuStatFailed" style="font-size: 32px;">-</div>
             <div class="subvalue">API 오류 또는 불일치</div>
           </div>
+          <!-- 실행 결과 카드 (자동 매칭 시 표시) -->
+          <div class="stat-card" id="pnuResultCard" style="display: none; border: 2px solid var(--accent-cyan);">
+            <div class="label" id="pnuResultLabel" style="color: var(--accent-cyan);">⚡ 자동 매칭</div>
+            <div id="pnuResultContent" style="margin-top: 8px;">
+              <div style="display: flex; gap: 16px; justify-content: center;">
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="pnuResultMatched">0</div>
+                  <div style="font-size: 10px; color: var(--text-secondary);">성공</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 700; color: var(--warning);" id="pnuResultAmbiguous">0</div>
+                  <div style="font-size: 10px; color: var(--text-secondary);">중복</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 700; color: var(--danger);" id="pnuResultFailed">0</div>
+                  <div style="font-size: 10px; color: var(--text-secondary);">실패</div>
+                </div>
+              </div>
+            </div>
+            <div class="subvalue" id="pnuResultStatus" style="margin-top: 8px;">대기 중</div>
+          </div>
         </div>
 
         <!-- 매칭률 프로그레스 바 -->
@@ -1039,12 +1061,6 @@
             <button class="action-btn" style="font-size: 11px; padding: 4px 8px; background: var(--warning);" onclick="clearMatchingRecords('clear_ambiguous')">🗑️ 중복</button>
             <button class="action-btn" style="font-size: 11px; padding: 4px 8px; background: #6366f1;" onclick="clearMatchingRecords('clear_all')">🗑️ 전체</button>
           </div>
-        </div>
-
-        <!-- 실행 결과 -->
-        <div id="pnuResultBox" style="display: none; margin-bottom: 24px; padding: 16px; border: 2px solid var(--border-color);">
-          <h4 style="margin-bottom: 12px; color: var(--accent-cyan);">실행 결과</h4>
-          <div id="pnuResultContent"></div>
         </div>
 
         <!-- 중복 후보 / 실패 목록 -->
@@ -1118,6 +1134,47 @@
         <div style="margin-bottom: 32px;">
           <h4 style="margin-bottom: 12px; color: var(--accent-yellow);">👥 유저별 조회 현황</h4>
           <div id="userLookupStatsContent" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 4px;">
+            <div class="empty-state">
+              <div class="message">데이터 로딩 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Session Stats -->
+      <div class="tab-content" id="tab-session-stats">
+        <h3 style="margin-bottom: 20px;">세션 통계</h3>
+
+        <!-- 새로고침 버튼 -->
+        <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
+          <button class="action-btn secondary" onclick="loadSessionStats()">🔄 새로고침</button>
+          <span id="sessionStatsLoading" style="display: none; color: var(--accent-cyan);">로딩 중...</span>
+        </div>
+
+        <!-- 일별 활성 유저 통계 -->
+        <div style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 12px; color: var(--accent-cyan);">📊 일별 활성 유저 (최근 30일)</h4>
+          <div id="dailyActiveUsersContent" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 4px;">
+            <div class="empty-state">
+              <div class="message">데이터 로딩 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 유저별 세션 통계 -->
+        <div style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 12px; color: var(--success);">👥 유저별 세션 통계 (최근 30일)</h4>
+          <div id="userSessionStatsContent" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 4px;">
+            <div class="empty-state">
+              <div class="message">데이터 로딩 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 익스텐션 버전별 사용 현황 -->
+        <div style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 12px; color: var(--accent-magenta);">📱 익스텐션 버전별 사용 현황</h4>
+          <div id="extensionVersionStatsContent" style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 4px;">
             <div class="empty-state">
               <div class="message">데이터 로딩 중...</div>
             </div>
