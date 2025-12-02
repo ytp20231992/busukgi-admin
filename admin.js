@@ -2095,3 +2095,294 @@ async function viewLoginHistory(userId, displayName, page = 1) {
     document.getElementById('loginHistoryPagination').innerHTML = '';
   }
 }
+
+// ============================================
+// Lookup Stats (조회 통계)
+// ============================================
+
+// 시군구코드 → 지역명 매핑 (주요 지역)
+const LAWD_CODE_MAP = {
+  '11110': '서울 종로구', '11140': '서울 중구', '11170': '서울 용산구', '11200': '서울 성동구',
+  '11215': '서울 광진구', '11230': '서울 동대문구', '11260': '서울 중랑구', '11290': '서울 성북구',
+  '11305': '서울 강북구', '11320': '서울 도봉구', '11350': '서울 노원구', '11380': '서울 은평구',
+  '11410': '서울 서대문구', '11440': '서울 마포구', '11470': '서울 양천구', '11500': '서울 강서구',
+  '11530': '서울 구로구', '11545': '서울 금천구', '11560': '서울 영등포구', '11590': '서울 동작구',
+  '11620': '서울 관악구', '11650': '서울 서초구', '11680': '서울 강남구', '11710': '서울 송파구',
+  '11740': '서울 강동구',
+  '26110': '부산 중구', '26140': '부산 서구', '26170': '부산 동구', '26200': '부산 영도구',
+  '26230': '부산 부산진구', '26260': '부산 동래구', '26290': '부산 남구', '26320': '부산 북구',
+  '26350': '부산 해운대구', '26380': '부산 사하구', '26410': '부산 금정구', '26440': '부산 강서구',
+  '26470': '부산 연제구', '26500': '부산 수영구', '26530': '부산 사상구', '26710': '부산 기장군',
+  '28110': '인천 중구', '28140': '인천 동구', '28177': '인천 미추홀구', '28185': '인천 연수구',
+  '28200': '인천 남동구', '28237': '인천 부평구', '28245': '인천 계양구', '28260': '인천 서구',
+  '28710': '인천 강화군', '28720': '인천 옹진군',
+  '41110': '경기 수원 장안구', '41111': '경기 수원 권선구', '41113': '경기 수원 팔달구', '41115': '경기 수원 영통구',
+  '41130': '경기 성남 수정구', '41131': '경기 성남 중원구', '41133': '경기 성남 분당구',
+  '41150': '경기 의정부', '41170': '경기 안양 만안구', '41171': '경기 안양 동안구',
+  '41190': '경기 부천', '41210': '경기 광명', '41220': '경기 평택', '41250': '경기 동두천',
+  '41270': '경기 안산 상록구', '41271': '경기 안산 단원구', '41280': '경기 고양 덕양구',
+  '41281': '경기 고양 일산동구', '41285': '경기 고양 일산서구', '41290': '경기 과천',
+  '41310': '경기 구리', '41360': '경기 남양주', '41370': '경기 오산', '41390': '경기 시흥',
+  '41410': '경기 군포', '41430': '경기 의왕', '41450': '경기 하남', '41460': '경기 용인 처인구',
+  '41461': '경기 용인 기흥구', '41463': '경기 용인 수지구', '41480': '경기 파주',
+  '41500': '경기 이천', '41550': '경기 안성', '41570': '경기 김포', '41590': '경기 화성',
+  '41610': '경기 광주', '41630': '경기 양주', '41650': '경기 포천', '41670': '경기 여주',
+};
+
+function getLawdCodeName(lawdCd) {
+  return LAWD_CODE_MAP[lawdCd] || lawdCd;
+}
+
+async function loadLookupStats() {
+  const period = parseInt(document.getElementById('lookupStatsPeriod').value) || 30;
+  const loading = document.getElementById('lookupStatsLoading');
+  loading.style.display = 'inline';
+
+  try {
+    const token = localStorage.getItem('admin_token');
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        admin_token: token,
+        action: 'get_lookup_stats',
+        period,
+        limit: 20
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'API 오류');
+    }
+
+    // 총 조회수
+    document.getElementById('statTotalLookups').textContent = (data.totalLookups || 0).toLocaleString();
+
+    // 인기 지역 렌더링
+    renderPopularRegions(data.popularRegions || []);
+
+    // 인기 검색어 렌더링
+    renderPopularQueries(data.popularQueries || []);
+
+    // 유저별 조회 통계 렌더링
+    renderUserLookupStats(data.userLookupStats || []);
+
+  } catch (error) {
+    console.error('조회 통계 로드 실패:', error);
+    document.getElementById('popularRegionsContent').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">❌</div>
+        <div class="message">데이터를 불러올 수 없습니다</div>
+        <div class="submessage">${escapeHtml(error.message)}</div>
+      </div>
+    `;
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderPopularRegions(regions) {
+  const container = document.getElementById('popularRegionsContent');
+
+  if (!regions || regions.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">조회 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">순위</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">지역</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">조회수</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">유저수</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  regions.forEach((region, idx) => {
+    const medal = idx < 3 ? ['🥇', '🥈', '🥉'][idx] : `${idx + 1}`;
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px;">${medal}</td>
+        <td style="padding: 8px; font-weight: 600;">${getLawdCodeName(region.lawd_cd)}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${region.lookup_count.toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--text-secondary);">${region.unique_users.toLocaleString()}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderPopularQueries(queries) {
+  const container = document.getElementById('popularQueriesContent');
+
+  if (!queries || queries.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">검색어 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">순위</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">검색어</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">검색수</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">유저수</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  queries.forEach((query, idx) => {
+    const medal = idx < 3 ? ['🥇', '🥈', '🥉'][idx] : `${idx + 1}`;
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px;">${medal}</td>
+        <td style="padding: 8px; font-weight: 600;">${escapeHtml(query.search_query)}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-magenta);">${query.search_count.toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--text-secondary);">${query.unique_users.toLocaleString()}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderUserLookupStats(users) {
+  const container = document.getElementById('userLookupStatsContent');
+
+  if (!users || users.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">유저 조회 데이터가 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">유저</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">총 조회</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">PNU</th>
+          <th style="text-align: right; padding: 8px; color: var(--text-secondary);">검색</th>
+          <th style="text-align: center; padding: 8px; color: var(--text-secondary);">상세</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  users.forEach((user) => {
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 8px; font-weight: 600;">${escapeHtml(user.nickname)}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-yellow);">${user.total_lookups.toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${user.pnu_lookups.toLocaleString()}</td>
+        <td style="padding: 8px; text-align: right; color: var(--accent-magenta);">${user.search_lookups.toLocaleString()}</td>
+        <td style="padding: 8px; text-align: center;">
+          <button onclick="viewUserLookupHistory('${user.user_id}', '${escapeHtml(user.nickname)}')"
+                  style="padding: 4px 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; cursor: pointer;">
+            📋
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function viewUserLookupHistory(userId, nickname) {
+  try {
+    const token = localStorage.getItem('admin_token');
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        admin_token: token,
+        action: 'get_user_lookup_history',
+        userId,
+        limit: 50
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'API 오류');
+    }
+
+    // 모달로 표시
+    let historyHtml = `<h3 style="margin-bottom: 16px;">${escapeHtml(nickname)}님의 최근 조회 내역</h3>`;
+
+    if (!data.history || data.history.length === 0) {
+      historyHtml += '<p style="color: var(--text-secondary);">조회 내역이 없습니다.</p>';
+    } else {
+      historyHtml += `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <th style="text-align: left; padding: 6px;">시간</th>
+              <th style="text-align: left; padding: 6px;">타입</th>
+              <th style="text-align: left; padding: 6px;">내용</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.history.forEach(item => {
+        const time = new Date(item.lookup_at).toLocaleString('ko-KR');
+        const type = item.pnu ? 'PNU' : '검색';
+        const content = item.pnu ? `${getLawdCodeName(item.lawd_cd)} (${item.pnu})` : item.search_query;
+
+        historyHtml += `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 6px; color: var(--text-secondary);">${time}</td>
+            <td style="padding: 6px;"><span style="color: ${item.pnu ? 'var(--accent-cyan)' : 'var(--accent-magenta)'};">${type}</span></td>
+            <td style="padding: 6px;">${escapeHtml(content || '-')}</td>
+          </tr>
+        `;
+      });
+
+      historyHtml += '</tbody></table>';
+    }
+
+    // 간단한 alert 대신 console에 표시 (모달 시스템이 있으면 그걸 사용)
+    alert(`${nickname}님의 최근 조회 ${data.history?.length || 0}건\n\n` +
+          data.history?.slice(0, 10).map(h => {
+            const time = new Date(h.lookup_at).toLocaleString('ko-KR');
+            return `${time}: ${h.pnu ? getLawdCodeName(h.lawd_cd) : h.search_query}`;
+          }).join('\n'));
+
+  } catch (error) {
+    console.error('조회 내역 로드 실패:', error);
+    alert('조회 내역을 불러올 수 없습니다: ' + error.message);
+  }
+}
