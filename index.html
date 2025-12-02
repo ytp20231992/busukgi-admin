@@ -1071,8 +1071,9 @@
         <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
           <label style="color: var(--text-secondary);">조회 기간:</label>
           <select id="lookupStatsPeriod" onchange="loadLookupStats()" style="padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+            <option value="1" selected>최근 1일</option>
             <option value="7">최근 7일</option>
-            <option value="30" selected>최근 30일</option>
+            <option value="30">최근 30일</option>
             <option value="90">최근 90일</option>
           </select>
           <button class="action-btn secondary" onclick="loadLookupStats()">🔄 새로고침</button>

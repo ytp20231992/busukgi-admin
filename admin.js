@@ -2134,7 +2134,7 @@ function getLawdCodeName(lawdCd) {
 }
 
 async function loadLookupStats() {
-  const period = parseInt(document.getElementById('lookupStatsPeriod').value) || 30;
+  const period = parseInt(document.getElementById('lookupStatsPeriod').value) || 1;
   const loading = document.getElementById('lookupStatsLoading');
   loading.style.display = 'inline';
 
