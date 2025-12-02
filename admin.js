@@ -2213,10 +2213,12 @@ function renderPopularRegions(regions) {
 
   regions.forEach((region, idx) => {
     const medal = idx < 3 ? ['🥇', '🥈', '🥉'][idx] : `${idx + 1}`;
+    // API에서 룩업한 region_name 우선 사용, 없으면 클라이언트 룩업
+    const regionName = region.region_name || getLawdCodeName(region.lawd_cd);
     html += `
       <tr style="border-bottom: 1px solid var(--border-color);">
         <td style="padding: 8px;">${medal}</td>
-        <td style="padding: 8px; font-weight: 600;">${getLawdCodeName(region.lawd_cd)}</td>
+        <td style="padding: 8px; font-weight: 600;">${escapeHtml(regionName)}</td>
         <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${region.lookup_count.toLocaleString()}</td>
         <td style="padding: 8px; text-align: right; color: var(--text-secondary);">${region.unique_users.toLocaleString()}</td>
       </tr>
@@ -2297,9 +2299,13 @@ function renderUserLookupStats(users) {
   `;
 
   users.forEach((user) => {
+    // 닉네임 + admin_memo 표시
+    const displayName = user.admin_memo
+      ? `${user.nickname} <span style="color: var(--text-secondary); font-weight: normal;">(${escapeHtml(user.admin_memo)})</span>`
+      : escapeHtml(user.nickname);
     html += `
       <tr style="border-bottom: 1px solid var(--border-color);">
-        <td style="padding: 8px; font-weight: 600;">${escapeHtml(user.nickname)}</td>
+        <td style="padding: 8px; font-weight: 600;">${displayName}</td>
         <td style="padding: 8px; text-align: right; color: var(--accent-yellow);">${user.total_lookups.toLocaleString()}</td>
         <td style="padding: 8px; text-align: right; color: var(--accent-cyan);">${user.pnu_lookups.toLocaleString()}</td>
         <td style="padding: 8px; text-align: right; color: var(--accent-magenta);">${user.search_lookups.toLocaleString()}</td>
