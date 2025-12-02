@@ -1603,6 +1603,7 @@ async function loadPnuStats() {
       // 통계 업데이트
       document.getElementById('pnuStatTotal').textContent = formatNumber(stats.total_land_transactions || 0);
       document.getElementById('pnuStatMatched').textContent = formatNumber(stats.matched_count || 0);
+      document.getElementById('pnuStatUnmatched').textContent = formatNumber(stats.unmatched_count || 0);
       document.getElementById('pnuStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
       document.getElementById('pnuStatFailed').textContent = formatNumber(stats.failed_count || 0);
 
@@ -1610,6 +1611,9 @@ async function loadPnuStats() {
       const matchRate = stats.match_rate || 0;
       document.getElementById('pnuMatchRate').textContent = `${matchRate}%`;
       document.getElementById('pnuMatchRateBar').style.width = `${matchRate}%`;
+
+      // 전역 변수에 미처리 건수 저장 (자동 매칭용)
+      window.pnuUnmatchedCount = stats.unmatched_count || 0;
     }
 
     // 중복 후보 목록
@@ -1838,7 +1842,8 @@ async function runPnuQuickMatch() {
       }
 
       const r = result.result || {};
-      const batchTotal = (r.matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
+      // bulk_matched도 포함해야 함!
+      const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
 
       // 처리된 건이 0이면 완료
       if (batchTotal === 0) {
@@ -1864,8 +1869,8 @@ async function runPnuQuickMatch() {
         break;
       }
 
-      // 누적 통계 업데이트
-      totalMatched += r.matched || 0;
+      // 누적 통계 업데이트 (bulk_matched도 matched에 합산)
+      totalMatched += (r.matched || 0) + (r.bulk_matched || 0);
       totalAmbiguous += r.ambiguous || 0;
       totalFailed += r.failed || 0;
 
