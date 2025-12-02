@@ -2444,6 +2444,7 @@ function renderUserSessionStats(users) {
       <thead>
         <tr style="border-bottom: 1px solid var(--border-color);">
           <th style="text-align: left; padding: 8px; color: var(--text-secondary);">유저</th>
+          <th style="text-align: left; padding: 8px; color: var(--text-secondary);">메모</th>
           <th style="text-align: right; padding: 8px; color: var(--text-secondary);">세션 수</th>
           <th style="text-align: left; padding: 8px; color: var(--text-secondary);">첫 세션</th>
           <th style="text-align: left; padding: 8px; color: var(--text-secondary);">마지막 세션</th>
@@ -2456,11 +2457,16 @@ function renderUserSessionStats(users) {
   users.forEach(user => {
     const firstSession = user.first_session ? new Date(user.first_session).toLocaleDateString('ko-KR') : '-';
     const lastSession = user.last_session ? new Date(user.last_session).toLocaleDateString('ko-KR') : '-';
-    const userId = user.user_id ? user.user_id.substring(0, 8) + '...' : '-';
+    const displayName = user.nickname || (user.user_id ? user.user_id.substring(0, 8) + '...' : '-');
+    const adminMemo = user.admin_memo ? `<span style="color: var(--warning); font-size: 11px;">${escapeHtml(user.admin_memo)}</span>` : '<span style="color: var(--text-secondary);">-</span>';
 
     html += `
       <tr style="border-bottom: 1px solid var(--border-color);">
-        <td style="padding: 8px; font-family: monospace; font-size: 11px;">${userId}</td>
+        <td style="padding: 8px;">
+          <div style="font-weight: 600;">${escapeHtml(displayName)}</div>
+          ${user.nickname ? `<div style="font-family: monospace; font-size: 10px; color: var(--text-secondary);">${user.user_id.substring(0, 8)}...</div>` : ''}
+        </td>
+        <td style="padding: 8px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${adminMemo}</td>
         <td style="padding: 8px; text-align: right; color: var(--accent-cyan); font-weight: 600;">${(user.session_count || 0).toLocaleString()}</td>
         <td style="padding: 8px; color: var(--text-secondary);">${firstSession}</td>
         <td style="padding: 8px; color: var(--success);">${lastSession}</td>
