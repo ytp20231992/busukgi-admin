@@ -74,6 +74,8 @@ function switchTab(tab) {
     loadGroups();
   } else if (tab === 'pnu-matcher') {
     loadPnuStats();
+  } else if (tab === 'lookup-stats') {
+    loadLookupStats();
   } else if (tab === 'settings') {
     loadAppSettings();
   }
@@ -1516,21 +1518,8 @@ async function deleteUser(userId, hardDelete = false) {
 // Deploy Time Display
 // ============================================
 function updateDeployTime() {
-  // 배포 시각 설정 (DEPLOY_TIMESTAMP 플레이스홀더가 있으면 현재 시각으로 대체)
-  const deployEl = document.getElementById('deployTime');
-  if (deployEl && deployEl.textContent === 'DEPLOY_TIMESTAMP') {
-    const now = new Date();
-    const timeStr = now.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    deployEl.textContent = timeStr;
-    deployEl.title = 'GitHub Pages 배포 시각 (최대 5분 소요)';
-  }
+  // 빌드 버전은 index.html에 하드코딩됨 (배포 시 수동 업데이트 필요)
+  // 형식: vYYYYMMDD.N (예: v20251202.1)
 
   // 현재 시각 업데이트 (1초마다)
   function updateCurrentTime() {
