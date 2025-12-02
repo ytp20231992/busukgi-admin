@@ -2265,8 +2265,21 @@ function renderUserLookupStats(users) {
   container.innerHTML = html;
 }
 
-async function viewUserLookupHistory(userId, nickname) {
+// 유저 조회 내역 - 페이지네이션 상태
+let lookupHistoryState = {
+  userId: null,
+  nickname: null,
+  page: 1,
+  limit: 30,
+  totalCount: 0
+};
+
+async function viewUserLookupHistory(userId, nickname, page = 1) {
   try {
+    lookupHistoryState.userId = userId;
+    lookupHistoryState.nickname = nickname;
+    lookupHistoryState.page = page;
+
     const token = localStorage.getItem('admin_token');
     const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
       method: 'POST',
@@ -2277,7 +2290,8 @@ async function viewUserLookupHistory(userId, nickname) {
         admin_token: token,
         action: 'get_user_lookup_history',
         userId,
-        limit: 50
+        page,
+        limit: lookupHistoryState.limit
       })
     });
 
@@ -2287,47 +2301,148 @@ async function viewUserLookupHistory(userId, nickname) {
       throw new Error(data.error || 'API 오류');
     }
 
-    // 모달로 표시
-    let historyHtml = `<h3 style="margin-bottom: 16px;">${escapeHtml(nickname)}님의 최근 조회 내역</h3>`;
+    lookupHistoryState.totalCount = data.totalCount || 0;
+
+    // PNU에서 지번 추출 (본번-부번)
+    const extractJibun = (pnu) => {
+      if (!pnu || pnu.length < 19) return '-';
+      const bonbun = parseInt(pnu.substring(11, 15), 10);
+      const bubun = parseInt(pnu.substring(15, 19), 10);
+      return bubun > 0 ? `${bonbun}-${bubun}` : `${bonbun}`;
+    };
+
+    // 날짜 포맷 (MM월 DD일 HH:mm)
+    const formatDate = (dateStr) => {
+      const d = new Date(dateStr);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hour = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${month}월 ${day}일 ${hour}:${min}`;
+    };
+
+    // 지역별로 그룹핑 (최근 조회 지역 우선, 그 안에서 시간순)
+    const groupByRegion = (history) => {
+      // 1. 지역별로 그룹핑
+      const regionMap = new Map();
+
+      for (const item of history) {
+        const regionKey = item.pnu ? (item.region_name || getLawdCodeName(item.lawd_cd)) : `🔍 ${item.search_query}`;
+
+        if (!regionMap.has(regionKey)) {
+          regionMap.set(regionKey, {
+            region: regionKey,
+            isPnu: !!item.pnu,
+            latestTime: item.lookup_at,
+            items: []
+          });
+        }
+
+        const group = regionMap.get(regionKey);
+        group.items.push({
+          jibun: item.pnu ? extractJibun(item.pnu) : '-',
+          time: formatDate(item.lookup_at),
+          rawTime: item.lookup_at
+        });
+
+        // 최신 시간 갱신
+        if (item.lookup_at > group.latestTime) {
+          group.latestTime = item.lookup_at;
+        }
+      }
+
+      // 2. 지역별 최신 조회 시간으로 정렬
+      const groups = Array.from(regionMap.values());
+      groups.sort((a, b) => new Date(b.latestTime) - new Date(a.latestTime));
+
+      // 3. 각 그룹 내에서 시간순 정렬 (최신이 위)
+      groups.forEach(group => {
+        group.items.sort((a, b) => new Date(b.rawTime) - new Date(a.rawTime));
+      });
+
+      return groups;
+    };
+
+    // 모달 HTML 생성
+    const totalPages = Math.ceil(lookupHistoryState.totalCount / lookupHistoryState.limit);
+
+    let historyHtml = `
+      <div style="max-height: 500px; overflow-y: auto;">
+        <h3 style="margin-bottom: 16px; color: var(--accent-cyan);">
+          📋 ${escapeHtml(nickname)}님의 조회 내역
+          <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">
+            (총 ${lookupHistoryState.totalCount}건)
+          </span>
+        </h3>
+    `;
 
     if (!data.history || data.history.length === 0) {
       historyHtml += '<p style="color: var(--text-secondary);">조회 내역이 없습니다.</p>';
     } else {
+      const groups = groupByRegion(data.history);
+
       historyHtml += `
         <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
           <thead>
-            <tr style="border-bottom: 1px solid var(--border-color);">
-              <th style="text-align: left; padding: 6px;">시간</th>
-              <th style="text-align: left; padding: 6px;">타입</th>
-              <th style="text-align: left; padding: 6px;">내용</th>
+            <tr style="border-bottom: 2px solid var(--accent-cyan);">
+              <th style="text-align: left; padding: 8px; color: var(--accent-cyan); width: 45%;">지역</th>
+              <th style="text-align: center; padding: 8px; color: var(--accent-cyan); width: 20%;">지번</th>
+              <th style="text-align: right; padding: 8px; color: var(--accent-cyan); width: 35%;">조회일시</th>
             </tr>
           </thead>
           <tbody>
       `;
 
-      data.history.forEach(item => {
-        const time = new Date(item.lookup_at).toLocaleString('ko-KR');
-        const type = item.pnu ? 'PNU' : '검색';
-        const content = item.pnu ? `${getLawdCodeName(item.lawd_cd)} (${item.pnu})` : item.search_query;
+      groups.forEach((group, groupIdx) => {
+        group.items.forEach((item, itemIdx) => {
+          const isFirstInGroup = itemIdx === 0;
+          const rowStyle = groupIdx % 2 === 0 ? 'background: var(--bg-tertiary);' : '';
+          const borderStyle = isFirstInGroup && groupIdx > 0 ? 'border-top: 1px solid var(--border-color);' : '';
 
-        historyHtml += `
-          <tr style="border-bottom: 1px solid var(--border-color);">
-            <td style="padding: 6px; color: var(--text-secondary);">${time}</td>
-            <td style="padding: 6px;"><span style="color: ${item.pnu ? 'var(--accent-cyan)' : 'var(--accent-magenta)'};">${type}</span></td>
-            <td style="padding: 6px;">${escapeHtml(content || '-')}</td>
-          </tr>
-        `;
+          historyHtml += `
+            <tr style="${rowStyle} ${borderStyle}">
+              ${isFirstInGroup ? `
+                <td rowspan="${group.items.length}" style="padding: 8px; vertical-align: top; font-weight: 600; color: ${group.isPnu ? 'var(--text-primary)' : 'var(--accent-magenta)'};">
+                  ${escapeHtml(group.region)}
+                </td>
+              ` : ''}
+              <td style="padding: 6px 8px; text-align: center; color: var(--accent-cyan);">${escapeHtml(item.jibun)}</td>
+              <td style="padding: 6px 8px; text-align: right; color: var(--text-secondary); font-size: 11px;">${item.time}</td>
+            </tr>
+          `;
+        });
       });
 
       historyHtml += '</tbody></table>';
     }
 
-    // 간단한 alert 대신 console에 표시 (모달 시스템이 있으면 그걸 사용)
-    alert(`${nickname}님의 최근 조회 ${data.history?.length || 0}건\n\n` +
-          data.history?.slice(0, 10).map(h => {
-            const time = new Date(h.lookup_at).toLocaleString('ko-KR');
-            return `${time}: ${h.pnu ? getLawdCodeName(h.lawd_cd) : h.search_query}`;
-          }).join('\n'));
+    historyHtml += '</div>';
+
+    // 기존 모달 사용 (loginHistoryModal 재활용)
+    const modal = document.getElementById('loginHistoryModal');
+    const content = document.getElementById('loginHistoryContent');
+    const paginationEl = document.getElementById('loginHistoryPagination');
+
+    if (modal && content) {
+      document.querySelector('#loginHistoryModal .modal-header').textContent = '📋 조회 내역';
+      content.innerHTML = historyHtml;
+
+      // 페이지네이션 렌더링
+      if (totalPages > 1) {
+        paginationEl.innerHTML = `
+          <button onclick="viewUserLookupHistory('${userId}', '${escapeHtml(nickname)}', ${page - 1})" ${page <= 1 ? 'disabled' : ''}>◀ 이전</button>
+          <span class="page-info">${page} / ${totalPages}</span>
+          <button onclick="viewUserLookupHistory('${userId}', '${escapeHtml(nickname)}', ${page + 1})" ${page >= totalPages ? 'disabled' : ''}>다음 ▶</button>
+        `;
+      } else {
+        paginationEl.innerHTML = '';
+      }
+
+      modal.classList.add('show');
+    } else {
+      // 모달이 없으면 alert 폴백
+      alert(`${nickname}님의 최근 조회 ${data.history?.length || 0}건`);
+    }
 
   } catch (error) {
     console.error('조회 내역 로드 실패:', error);
