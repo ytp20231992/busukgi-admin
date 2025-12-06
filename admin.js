@@ -1599,6 +1599,12 @@ async function loadPnuStats() {
       document.getElementById('pnuStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
       document.getElementById('pnuStatFailed').textContent = formatNumber(stats.failed_count || 0);
 
+      // 지분거래 및 일괄매각 통계 (bulk_sale_group 필드 기반)
+      const shareSaleEl = document.getElementById('pnuStatShareSale');
+      const bulkSaleEl = document.getElementById('pnuStatBulkSale');
+      if (shareSaleEl) shareSaleEl.textContent = formatNumber(stats.share_sale_count || 0);
+      if (bulkSaleEl) bulkSaleEl.textContent = formatNumber(stats.bulk_sale_count || 0);
+
       // 매칭률 업데이트
       const matchRate = stats.match_rate || 0;
       document.getElementById('pnuMatchRate').textContent = `${matchRate}%`;
@@ -1837,8 +1843,8 @@ async function runPnuQuickMatch() {
       }
 
       const r = result.result || {};
-      // bulk_matched도 포함해야 함!
-      const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
+      // bulk_matched, share_matched도 포함해야 함!
+      const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
 
       // 처리된 건이 0이면 완료
       if (batchTotal === 0) {
@@ -1847,8 +1853,8 @@ async function runPnuQuickMatch() {
         break;
       }
 
-      // 누적 통계 업데이트 (bulk_matched도 matched에 합산)
-      totalMatched += (r.matched || 0) + (r.bulk_matched || 0);
+      // 누적 통계 업데이트 (bulk_matched, share_matched도 matched에 합산)
+      totalMatched += (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0);
       totalAmbiguous += r.ambiguous || 0;
       totalFailed += r.failed || 0;
 

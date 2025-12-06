@@ -861,7 +861,7 @@
         <div class="admin-name" id="adminName">-</div>
         <div id="lastSync">-</div>
         <div style="font-size: 12px; color: #999; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
-          <div>빌드: <span id="deployTime">#0628</span></div>
+          <div>빌드: <span id="deployTime">#0633</span></div>
           <div>현재: <span id="currentTime">-</span></div>
         </div>
       </div>
@@ -968,24 +968,34 @@
             <div class="value" id="pnuStatTotal" style="font-size: 32px;">-</div>
             <div class="subvalue">마스킹된 거래 건수</div>
           </div>
-          <div class="stat-card">
-            <div class="label">매칭 완료</div>
-            <div class="value" id="pnuStatMatched" style="font-size: 32px;">-</div>
+          <div class="stat-card" style="border-left: 3px solid var(--success);">
+            <div class="label">✅ 자동 매칭</div>
+            <div class="value" id="pnuStatMatched" style="font-size: 32px; color: var(--success);">-</div>
             <div class="subvalue">PNU 자동 입력 완료</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #8b5cf6;">
+            <div class="label">📊 지분거래</div>
+            <div class="value" id="pnuStatShareSale" style="font-size: 32px; color: #8b5cf6;">-</div>
+            <div class="subvalue">면적 합산 매칭</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #06b6d4;">
+            <div class="label">🏷️ 일괄매각</div>
+            <div class="value" id="pnuStatBulkSale" style="font-size: 32px; color: #06b6d4;">-</div>
+            <div class="subvalue">다중 필지 매칭</div>
           </div>
           <div class="stat-card">
             <div class="label">미처리</div>
             <div class="value" id="pnuStatUnmatched" style="font-size: 32px;">-</div>
             <div class="subvalue">매칭 대기 중</div>
           </div>
-          <div class="stat-card">
-            <div class="label">중복 후보</div>
-            <div class="value" id="pnuStatAmbiguous" style="font-size: 32px;">-</div>
-            <div class="subvalue">수동 확인 필요</div>
+          <div class="stat-card" style="border-left: 3px solid var(--warning);">
+            <div class="label">⚠️ 수동 검토</div>
+            <div class="value" id="pnuStatAmbiguous" style="font-size: 32px; color: var(--warning);">-</div>
+            <div class="subvalue">중복 후보</div>
           </div>
-          <div class="stat-card">
-            <div class="label">매칭 실패</div>
-            <div class="value" id="pnuStatFailed" style="font-size: 32px;">-</div>
+          <div class="stat-card" style="border-left: 3px solid var(--danger);">
+            <div class="label">❌ 매칭 실패</div>
+            <div class="value" id="pnuStatFailed" style="font-size: 32px; color: var(--danger);">-</div>
             <div class="subvalue">API 오류 또는 불일치</div>
           </div>
           <!-- 실행 결과 카드 (자동 매칭 시 표시) -->
