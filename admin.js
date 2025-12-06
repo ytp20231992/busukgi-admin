@@ -72,6 +72,8 @@ function switchTab(tab) {
     loadDeletedUsers();
   } else if (tab === 'groups') {
     loadGroups();
+  } else if (tab === 'molit-status') {
+    loadMolitStatus();
   } else if (tab === 'pnu-matcher') {
     loadPnuStats();
   } else if (tab === 'lookup-stats') {
@@ -2652,4 +2654,209 @@ function renderExtensionVersionStats(versions) {
 
   html += '</tbody></table>';
   container.innerHTML = html;
+}
+
+// ============================================
+// MOLIT 수집 현황 (수집 현황 탭)
+// ============================================
+let molitStatusData = [];
+let currentMolitStatusFilter = 'all';
+
+async function loadMolitStatus() {
+  const container = document.getElementById('molitStatusContent');
+  container.innerHTML = '<div class="loading">수집 현황을 불러오는 중...</div>';
+
+  try {
+    const result = await callAdminAPI('get_molit_status');
+    molitStatusData = result.regions || [];
+
+    // 통계 업데이트
+    const now = new Date();
+    const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // 60일 전
+
+    const validCount = molitStatusData.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length;
+    const expiredCount = molitStatusData.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
+    const emptyCount = molitStatusData.filter(r => r.total_records === 0).length;
+
+    document.getElementById('molitStatRegions').textContent = molitStatusData.length;
+    document.getElementById('molitStatValid').textContent = validCount;
+    document.getElementById('molitStatExpired').textContent = expiredCount;
+    document.getElementById('molitStatEmpty').textContent = emptyCount;
+
+    renderMolitStatusTable();
+  } catch (error) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">❌</div>
+        <div class="message">수집 현황 로드 실패: ${error.message}</div>
+      </div>
+    `;
+  }
+}
+
+function setMolitStatusFilter(filter) {
+  currentMolitStatusFilter = filter;
+
+  // 필터 버튼 활성화 상태 업데이트
+  document.querySelectorAll('#tab-molit-status .filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+
+  renderMolitStatusTable();
+}
+
+function renderMolitStatusTable() {
+  const container = document.getElementById('molitStatusContent');
+  const now = new Date();
+  const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+  // 필터 적용
+  let filtered = molitStatusData;
+  if (currentMolitStatusFilter === 'valid') {
+    filtered = molitStatusData.filter(r => new Date(r.last_collected_at) >= ttlCutoff);
+  } else if (currentMolitStatusFilter === 'expired') {
+    filtered = molitStatusData.filter(r => new Date(r.last_collected_at) < ttlCutoff);
+  } else if (currentMolitStatusFilter === 'empty') {
+    filtered = molitStatusData.filter(r => r.total_records === 0);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="message">해당 조건의 지역이 없습니다</div>
+      </div>
+    `;
+    return;
+  }
+
+  // 정렬: 마지막 수집일 내림차순
+  filtered.sort((a, b) => new Date(b.last_collected_at) - new Date(a.last_collected_at));
+
+  let html = `
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border-color);">
+          <th style="text-align: left; padding: 12px; color: var(--text-secondary);">지역</th>
+          <th style="text-align: center; padding: 12px; color: var(--text-secondary);">유형</th>
+          <th style="text-align: right; padding: 12px; color: var(--text-secondary);">수집 건수</th>
+          <th style="text-align: center; padding: 12px; color: var(--text-secondary);">마지막 수집</th>
+          <th style="text-align: center; padding: 12px; color: var(--text-secondary);">상태</th>
+          <th style="text-align: center; padding: 12px; color: var(--text-secondary);">액션</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  filtered.forEach(region => {
+    const lastCollected = new Date(region.last_collected_at);
+    const isExpired = lastCollected < ttlCutoff;
+    const isEmpty = region.total_records === 0;
+    const daysAgo = Math.floor((now - lastCollected) / (24 * 60 * 60 * 1000));
+
+    const regionName = region.region_name || getLawdCodeName(region.lawd_cd) || region.lawd_cd;
+    const typeLabel = region.transaction_type === 'land' ? '🏞️ 토지' : '🏢 상가';
+    const statusBadge = isEmpty
+      ? '<span class="badge" style="background: #8b5cf6;">0건</span>'
+      : isExpired
+        ? '<span class="badge" style="background: var(--warning);">TTL 만료</span>'
+        : '<span class="badge active">유효</span>';
+
+    html += `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 10px 12px;">
+          <strong>${escapeHtml(regionName)}</strong>
+          <span style="color: var(--text-tertiary); font-size: 11px; margin-left: 8px;">${region.lawd_cd}</span>
+        </td>
+        <td style="padding: 10px 12px; text-align: center;">${typeLabel}</td>
+        <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: ${isEmpty ? '#8b5cf6' : 'var(--accent-cyan)'};">
+          ${region.total_records.toLocaleString()}건
+        </td>
+        <td style="padding: 10px 12px; text-align: center; color: var(--text-secondary);">
+          ${lastCollected.toLocaleDateString('ko-KR')}
+          <span style="font-size: 11px; color: ${isExpired ? 'var(--warning)' : 'var(--text-tertiary)'};">
+            (${daysAgo}일 전)
+          </span>
+        </td>
+        <td style="padding: 10px 12px; text-align: center;">${statusBadge}</td>
+        <td style="padding: 10px 12px; text-align: center;">
+          <button class="action-btn ${isExpired || isEmpty ? 'primary' : 'secondary'}"
+                  onclick="forceCollectRegion('${region.lawd_cd}', '${region.transaction_type}', '${escapeHtml(regionName)}')"
+                  style="padding: 4px 10px; font-size: 11px;">
+            🔄 ${isExpired || isEmpty ? '강제수집' : '재수집'}
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function forceCollectRegion(lawdCd, transactionType, regionName) {
+  if (!confirm(`${regionName} (${transactionType === 'land' ? '토지' : '상가'})를 강제로 재수집하시겠습니까?\n\n⚠️ TTL 60일을 무시하고 즉시 수집을 시작합니다.`)) {
+    return;
+  }
+
+  showLoading(true);
+  showSuccess(`🔄 ${regionName} 수집 시작...`);
+
+  try {
+    // molit-transactions 직접 호출 (force: true)
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/molit-transactions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'collect_region',
+        lawd_cd: lawdCd,
+        types: [transactionType],
+        months: 12,  // 최근 12개월
+        force: true  // TTL 무시
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'API 호출 실패');
+    }
+
+    const collected = result.collected || {};
+    const landCount = collected.land || 0;
+    const commercialCount = collected.commercial || 0;
+    const autoMatched = collected.autoMatched || {};
+
+    showSuccess(`✅ ${regionName} 수집 완료!\n토지: ${landCount}건, 상가: ${commercialCount}건\n자동매칭: ${autoMatched.matched || 0}건, 지분거래: ${autoMatched.share_matched || 0}건`);
+
+    // 목록 새로고침
+    setTimeout(() => loadMolitStatus(), 1000);
+
+  } catch (error) {
+    showError(`❌ 수집 실패: ${error.message}`);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// 법정동코드 → 지역명 매핑 (자주 사용되는 지역)
+function getLawdCodeName(lawdCd) {
+  const names = {
+    '11110': '서울 종로구', '11140': '서울 중구', '11170': '서울 용산구', '11200': '서울 성동구',
+    '11215': '서울 광진구', '11230': '서울 동대문구', '11260': '서울 중랑구', '11290': '서울 성북구',
+    '11305': '서울 강북구', '11320': '서울 도봉구', '11350': '서울 노원구', '11380': '서울 은평구',
+    '11410': '서울 서대문구', '11440': '서울 마포구', '11470': '서울 양천구', '11500': '서울 강서구',
+    '11530': '서울 구로구', '11545': '서울 금천구', '11560': '서울 영등포구', '11590': '서울 동작구',
+    '11620': '서울 관악구', '11650': '서울 서초구', '11680': '서울 강남구', '11710': '서울 송파구',
+    '11740': '서울 강동구',
+    '41111': '수원 장안구', '41113': '수원 권선구', '41115': '수원 팔달구', '41117': '수원 영통구',
+    '41131': '성남 수정구', '41133': '성남 중원구', '41135': '성남 분당구',
+    '50110': '제주시', '50130': '서귀포시'
+  };
+  return names[lawdCd] || null;
 }

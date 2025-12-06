@@ -897,6 +897,7 @@
         <button class="tab-btn active" data-tab="users">사용자 관리</button>
         <button class="tab-btn" data-tab="deleted">탈퇴 회원</button>
         <button class="tab-btn" data-tab="groups">그룹 관리</button>
+        <button class="tab-btn" data-tab="molit-status">수집 현황</button>
         <button class="tab-btn" data-tab="pnu-matcher">PNU 매칭</button>
         <button class="tab-btn" data-tab="lookup-stats">조회 통계</button>
         <button class="tab-btn" data-tab="session-stats">세션 통계</button>
@@ -955,6 +956,59 @@
           <button class="action-btn primary" onclick="showAddGroupModal()">➕ 그룹 추가</button>
         </div>
         <div id="groupsContent"></div>
+      </div>
+
+      <!-- Tab: MOLIT 수집 현황 -->
+      <div class="tab-content" id="tab-molit-status">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>📊 실거래가 수집 현황</h3>
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn secondary" onclick="loadMolitStatus()">🔄 새로고침</button>
+          </div>
+        </div>
+
+        <!-- 수집 통계 요약 -->
+        <div class="stats-grid" style="margin-bottom: 24px;">
+          <div class="stat-card">
+            <div class="label">수집된 지역</div>
+            <div class="value" id="molitStatRegions" style="font-size: 32px;">-</div>
+            <div class="subvalue">/ 전국 280개 시군구</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid var(--success);">
+            <div class="label">✅ TTL 유효</div>
+            <div class="value" id="molitStatValid" style="font-size: 32px; color: var(--success);">-</div>
+            <div class="subvalue">60일 이내 수집</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid var(--warning);">
+            <div class="label">⏰ TTL 만료</div>
+            <div class="value" id="molitStatExpired" style="font-size: 32px; color: var(--warning);">-</div>
+            <div class="subvalue">재수집 필요</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #8b5cf6;">
+            <div class="label">📭 0건 지역</div>
+            <div class="value" id="molitStatEmpty" style="font-size: 32px; color: #8b5cf6;">-</div>
+            <div class="subvalue">거래 없음</div>
+          </div>
+        </div>
+
+        <!-- 필터 -->
+        <div style="margin: 16px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <button class="filter-btn active" onclick="setMolitStatusFilter('all')">📊 전체</button>
+          <button class="filter-btn" onclick="setMolitStatusFilter('valid')">✅ TTL 유효</button>
+          <button class="filter-btn" onclick="setMolitStatusFilter('expired')">⏰ TTL 만료</button>
+          <button class="filter-btn" onclick="setMolitStatusFilter('empty')">📭 0건 지역</button>
+          <span style="margin-left: auto; color: #888; font-size: 13px;">
+            💡 강제수집: TTL 60일 무시하고 즉시 재수집
+          </span>
+        </div>
+
+        <!-- 수집 현황 테이블 -->
+        <div id="molitStatusContent">
+          <div class="empty-state">
+            <div class="icon">📊</div>
+            <div class="message">수집 현황을 불러오는 중...</div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: PNU Matcher -->
