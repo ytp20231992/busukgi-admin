@@ -1934,6 +1934,295 @@ async function clearMatchingRecords(type) {
   }
 }
 
+// ============================================
+// PNU 서브탭 전환 함수
+// ============================================
+
+function switchPnuSubTab(tabName) {
+  // 서브탭 버튼 스타일 업데이트
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === tabName);
+  });
+
+  // 서브탭 컨텐츠 표시/숨김
+  document.getElementById('pnu-subtab-land').style.display = tabName === 'land' ? 'block' : 'none';
+  document.getElementById('pnu-subtab-commercial').style.display = tabName === 'commercial' ? 'block' : 'none';
+
+  // 해당 탭의 통계 로드
+  if (tabName === 'land') {
+    loadPnuStats();
+  } else {
+    loadCommercialStats();
+  }
+}
+
+// ============================================
+// Commercial (상가) PNU Matcher Functions
+// ============================================
+
+async function callCommercialMatcherAPI(action, data = {}) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/commercial-pnu-matcher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: action,
+        ...data
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Commercial Matcher API 오류:', result);
+      throw new Error(result.error || `API 호출 실패 (${response.status})`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Commercial Matcher API 오류:', error);
+    throw error;
+  }
+}
+
+async function loadCommercialStats() {
+  try {
+    const result = await callCommercialMatcherAPI('status');
+
+    if (result.stats) {
+      const stats = result.stats;
+
+      // 통계 업데이트
+      document.getElementById('commercialStatTotal').textContent = formatNumber(stats.total_commercial_transactions || 0);
+      document.getElementById('commercialStatMatched').textContent = formatNumber(stats.matched_count || 0);
+      document.getElementById('commercialStatUnmatched').textContent = formatNumber(stats.unmatched_count || 0);
+      document.getElementById('commercialStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
+      document.getElementById('commercialStatFailed').textContent = formatNumber(stats.failed_count || 0);
+      document.getElementById('commercialStatAutoApproved').textContent = formatNumber(stats.auto_approved_count || 0);
+
+      // 매칭률 업데이트
+      const matchRate = stats.match_rate || 0;
+      document.getElementById('commercialMatchRate').textContent = `${matchRate}%`;
+      document.getElementById('commercialMatchRateBar').style.width = `${matchRate}%`;
+    }
+
+    // 중복 후보 목록
+    if (result.ambiguous && result.ambiguous.length > 0) {
+      renderCommercialAmbiguousList(result.ambiguous);
+    } else {
+      document.getElementById('commercialAmbiguousList').innerHTML =
+        '<p style="color: var(--text-secondary); font-size: 12px;">미해결 중복 후보 없음</p>';
+    }
+
+    // 실패 목록
+    if (result.failed && result.failed.length > 0) {
+      renderCommercialFailedList(result.failed);
+    } else {
+      document.getElementById('commercialFailedList').innerHTML =
+        '<p style="color: var(--text-secondary); font-size: 12px;">매칭 실패 건 없음</p>';
+    }
+
+  } catch (error) {
+    showError('상가 매칭 통계 로드 실패: ' + error.message);
+  }
+}
+
+function renderCommercialAmbiguousList(items) {
+  const container = document.getElementById('commercialAmbiguousList');
+
+  let html = '<table style="width: 100%; font-size: 11px;">';
+  html += '<thead><tr><th>거래ID</th><th>지번</th><th>후보수</th><th>등록일</th></tr></thead><tbody>';
+
+  items.slice(0, 20).forEach(item => {
+    const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+    html += `
+      <tr>
+        <td>${item.transaction_id}</td>
+        <td>${escapeHtml(item.jibun || '-')}</td>
+        <td><span class="badge warning">${item.candidate_count || (item.candidate_pnus?.length || 0)}건</span></td>
+        <td>${createdAt}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+
+  if (items.length > 20) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderCommercialFailedList(items) {
+  const container = document.getElementById('commercialFailedList');
+
+  let html = '<table style="width: 100%; font-size: 11px;">';
+  html += '<thead><tr><th>거래ID</th><th>실패 사유</th><th>재시도</th></tr></thead><tbody>';
+
+  items.slice(0, 20).forEach(item => {
+    const reasonText = {
+      'no_building_register': '건축물대장 없음',
+      'no_match': '매칭 불가',
+      'api_error': 'API 오류',
+      'low_confidence': '신뢰도 낮음'
+    }[item.reason] || item.reason || '-';
+
+    html += `
+      <tr>
+        <td>${item.transaction_id}</td>
+        <td><span class="badge danger">${reasonText}</span></td>
+        <td>${item.retry_count || 0}회</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+
+  if (items.length > 20) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  }
+
+  container.innerHTML = html;
+}
+
+async function runCommercialBatchMatch() {
+  const lawdCd = document.getElementById('commercialLawdCd').value.trim();
+  const limit = parseInt(document.getElementById('commercialLimit').value) || 50;
+
+  // 버튼 비활성화
+  const btn = document.getElementById('btnRunCommercialMatch');
+  const btnText = document.getElementById('btnRunCommercialMatchText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ 실행 중...';
+
+  // 결과 카드 초기화
+  updateCommercialResultCard(0, 0, 0, '⏳ 매칭 진행 중... (시간이 걸릴 수 있습니다)');
+
+  try {
+    const params = { limit: limit };
+    if (lawdCd) params.lawd_cd = lawdCd;
+
+    const result = await callCommercialMatcherAPI('batch_match', params);
+
+    if (result.success !== false) {
+      updateCommercialResultCard(
+        result.matched || 0,
+        result.skipped || 0,
+        result.failed || 0,
+        `✅ 완료`,
+        'var(--success)'
+      );
+
+      // 통계 새로고침
+      await loadCommercialStats();
+    } else {
+      updateCommercialResultCard(0, 0, 0, `❌ 오류: ${result.error || '알 수 없는 오류'}`, 'var(--danger)');
+    }
+
+  } catch (error) {
+    updateCommercialResultCard(0, 0, 0, `❌ 오류: ${error.message}`, 'var(--danger)');
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '▶ 배치 실행';
+  }
+}
+
+// 상가 자동 반복 매칭 상태
+let commercialAutoMatchRunning = false;
+
+function updateCommercialResultCard(matched, skipped, failed, status, borderColor = 'var(--accent-cyan)') {
+  const card = document.getElementById('commercialResultCard');
+  const statusEl = document.getElementById('commercialResultStatus');
+
+  card.style.display = 'block';
+  card.style.borderColor = borderColor;
+
+  document.getElementById('commercialResultMatched').textContent = matched;
+  document.getElementById('commercialResultSkipped').textContent = skipped;
+  document.getElementById('commercialResultFailed').textContent = failed;
+  statusEl.textContent = status;
+}
+
+async function runCommercialQuickMatch() {
+  const btn = document.getElementById('btnRunCommercialQuick');
+  const btnText = document.getElementById('btnRunCommercialQuickText');
+
+  // 이미 실행 중이면 중지
+  if (commercialAutoMatchRunning) {
+    commercialAutoMatchRunning = false;
+    btnText.textContent = '⏹️ 중지 중...';
+    return;
+  }
+
+  if (!confirm('남은 데이터가 없을 때까지 50건씩 자동으로 매칭합니다.\n(버튼을 다시 클릭하면 중지됩니다)\n\n⚠️ 상가 매칭은 건축물대장 API를 사용하므로 시간이 오래 걸릴 수 있습니다.\n\n시작하시겠습니까?')) {
+    return;
+  }
+
+  commercialAutoMatchRunning = true;
+  btnText.textContent = '⏹️ 중지';
+  btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+
+  // 누적 통계
+  let totalMatched = 0;
+  let totalSkipped = 0;
+  let totalFailed = 0;
+  let batchCount = 0;
+
+  try {
+    while (commercialAutoMatchRunning) {
+      batchCount++;
+      updateCommercialResultCard(totalMatched, totalSkipped, totalFailed, `⚡ 배치 #${batchCount} 진행 중...`);
+
+      const result = await callCommercialMatcherAPI('batch_match', { limit: 50 });
+
+      if (result.success === false) {
+        throw new Error(result.error || '알 수 없는 오류');
+      }
+
+      const batchTotal = (result.matched || 0) + (result.skipped || 0) + (result.failed || 0);
+
+      // 처리된 건이 0이면 완료
+      if (batchTotal === 0) {
+        commercialAutoMatchRunning = false;
+        updateCommercialResultCard(totalMatched, totalSkipped, totalFailed, `✅ 완료! (${batchCount}회)`, 'var(--success)');
+        break;
+      }
+
+      // 누적 통계 업데이트
+      totalMatched += result.matched || 0;
+      totalSkipped += result.skipped || 0;
+      totalFailed += result.failed || 0;
+
+      // 실시간 통계 표시
+      updateCommercialResultCard(totalMatched, totalSkipped, totalFailed, `⏳ 배치 #${batchCount} 완료`);
+
+      // 2초 대기 후 다음 배치 (건축물대장 API 부하 방지)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    // 사용자가 중지한 경우
+    if (!commercialAutoMatchRunning && batchCount > 0) {
+      updateCommercialResultCard(totalMatched, totalSkipped, totalFailed, `⏹️ 중지됨 (${batchCount}회)`, 'var(--warning)');
+    }
+
+    // 통계 새로고침
+    await loadCommercialStats();
+
+  } catch (error) {
+    commercialAutoMatchRunning = false;
+    updateCommercialResultCard(totalMatched, totalSkipped, totalFailed, `❌ 오류: ${error.message}`, 'var(--danger)');
+  } finally {
+    commercialAutoMatchRunning = false;
+    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    btnText.textContent = '⚡ 자동 매칭';
+  }
+}
+
 async function viewLoginHistory(userId, displayName, page = 1) {
   currentLoginHistoryUserId = userId;
   currentLoginHistoryPage = page;

@@ -850,6 +850,39 @@
       color: var(--accent-yellow);
       border-color: var(--accent-yellow);
     }
+
+    /* 서브탭 스타일 */
+    .sub-tab-btn {
+      padding: 10px 20px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Pretendard', 'JetBrains Mono', monospace;
+    }
+
+    .sub-tab-btn:hover:not(.active) {
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+    }
+
+    .sub-tab-btn.active {
+      background: rgba(0, 245, 255, 0.1);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .pnu-subtab-content {
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -1013,6 +1046,14 @@
 
       <!-- Tab: PNU Matcher -->
       <div class="tab-content" id="tab-pnu-matcher">
+        <!-- 서브탭: 토지/상가 -->
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+          <button class="sub-tab-btn active" data-subtab="land" onclick="switchPnuSubTab('land')">🏞️ 토지</button>
+          <button class="sub-tab-btn" data-subtab="commercial" onclick="switchPnuSubTab('commercial')">🏢 상가</button>
+        </div>
+
+        <!-- 토지 서브탭 -->
+        <div id="pnu-subtab-land" class="pnu-subtab-content">
         <h3 style="margin-bottom: 20px;">토지 실거래가 PNU 매칭</h3>
 
         <!-- 매칭 통계 카드 -->
@@ -1146,6 +1187,126 @@
             <button class="action-btn" style="margin-top: 12px;" onclick="retryFailedMatches()">🔄 실패 건 재시도</button>
           </div>
         </div>
+        </div>
+        <!-- // 토지 서브탭 끝 -->
+
+        <!-- 상가 서브탭 -->
+        <div id="pnu-subtab-commercial" class="pnu-subtab-content" style="display: none;">
+          <h3 style="margin-bottom: 20px;">상가 실거래가 PNU 매칭</h3>
+
+          <!-- 매칭 통계 카드 -->
+          <div class="stats-grid" style="margin-bottom: 24px;">
+            <div class="stat-card">
+              <div class="label">전체 상가 거래</div>
+              <div class="value" id="commercialStatTotal" style="font-size: 32px;">-</div>
+              <div class="subvalue">수집된 상가 거래 건수</div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--success);">
+              <div class="label">✅ 매칭 완료</div>
+              <div class="value" id="commercialStatMatched" style="font-size: 32px; color: var(--success);">-</div>
+              <div class="subvalue">PNU 입력 완료</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">미처리</div>
+              <div class="value" id="commercialStatUnmatched" style="font-size: 32px;">-</div>
+              <div class="subvalue">매칭 대기 중 (마스킹)</div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--warning);">
+              <div class="label">⚠️ 중복 후보</div>
+              <div class="value" id="commercialStatAmbiguous" style="font-size: 32px; color: var(--warning);">-</div>
+              <div class="subvalue">수동 검토 필요</div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid var(--danger);">
+              <div class="label">❌ 매칭 실패</div>
+              <div class="value" id="commercialStatFailed" style="font-size: 32px; color: var(--danger);">-</div>
+              <div class="subvalue">건축물대장 조회 실패</div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid #06b6d4;">
+              <div class="label">⚡ 자동 승인</div>
+              <div class="value" id="commercialStatAutoApproved" style="font-size: 32px; color: #06b6d4;">-</div>
+              <div class="subvalue">신뢰도 70% 이상</div>
+            </div>
+            <!-- 실행 결과 카드 -->
+            <div class="stat-card" id="commercialResultCard" style="display: none; border: 2px solid var(--accent-cyan);">
+              <div class="label" id="commercialResultLabel" style="color: var(--accent-cyan);">⚡ 자동 매칭</div>
+              <div id="commercialResultContent" style="margin-top: 8px;">
+                <div style="display: flex; gap: 16px; justify-content: center;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="commercialResultMatched">0</div>
+                    <div style="font-size: 10px; color: var(--text-secondary);">성공</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #06b6d4;" id="commercialResultSkipped">0</div>
+                    <div style="font-size: 10px; color: var(--text-secondary);">건대장없음</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--danger);" id="commercialResultFailed">0</div>
+                    <div style="font-size: 10px; color: var(--text-secondary);">실패</div>
+                  </div>
+                </div>
+              </div>
+              <div class="subvalue" id="commercialResultStatus" style="margin-top: 8px;">대기 중</div>
+            </div>
+          </div>
+
+          <!-- 매칭률 프로그레스 바 -->
+          <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-weight: 600; color: var(--accent-cyan);">매칭률</span>
+              <span id="commercialMatchRate" style="font-weight: 700; color: var(--success);">--%</span>
+            </div>
+            <div style="height: 8px; background: var(--border-color); overflow: hidden;">
+              <div id="commercialMatchRateBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-cyan), var(--success)); transition: width 0.5s ease;"></div>
+            </div>
+          </div>
+
+          <!-- 배치 실행 컨트롤 -->
+          <div style="margin-bottom: 24px; padding: 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 16px; color: var(--accent-cyan);">배치 매칭 실행</h4>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="display: block; margin-bottom: 4px;">시군구 코드 (선택)</label>
+                <input type="text" id="commercialLawdCd" placeholder="예: 41630" style="width: 120px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="display: block; margin-bottom: 4px;">처리 건수</label>
+                <input type="number" id="commercialLimit" value="50" min="1" max="200" style="width: 80px;">
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="action-btn primary" onclick="runCommercialBatchMatch()" id="btnRunCommercialMatch">
+                  <span id="btnRunCommercialMatchText">▶ 배치 실행</span>
+                </button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="runCommercialQuickMatch()" id="btnRunCommercialQuick">
+                  <span id="btnRunCommercialQuickText">⚡ 자동 매칭</span>
+                </button>
+                <button class="action-btn secondary" onclick="loadCommercialStats()">🔄 새로고침</button>
+              </div>
+            </div>
+            <p style="margin-top: 12px; font-size: 11px; color: var(--text-secondary);">
+              💡 상가 매칭은 건축물대장 API를 사용하므로 토지보다 시간이 오래 걸립니다. (최대 200건/배치)
+            </p>
+          </div>
+
+          <!-- 중복 후보 / 실패 목록 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- 중복 후보 -->
+            <div style="padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 12px; color: var(--warning);">중복 후보 (수동 확인 필요)</h4>
+              <div id="commercialAmbiguousList" style="max-height: 300px; overflow-y: auto;">
+                <p style="color: var(--text-secondary); font-size: 12px;">데이터 없음</p>
+              </div>
+            </div>
+
+            <!-- 매칭 실패 -->
+            <div style="padding: 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 12px; color: var(--danger);">매칭 실패</h4>
+              <div id="commercialFailedList" style="max-height: 300px; overflow-y: auto;">
+                <p style="color: var(--text-secondary); font-size: 12px;">데이터 없음</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- // 상가 서브탭 끝 -->
       </div>
 
       <!-- Tab: Lookup Stats -->
