@@ -3084,13 +3084,57 @@ function renderMolitStatusTable() {
   container.innerHTML = html;
 }
 
+// 수집 진행 중인 지역 추적
+const activeCollections = new Map(); // lawdCd_type -> {startCount, intervalId}
+
 async function forceCollectRegion(lawdCd, transactionType, regionName) {
   if (!confirm(`${regionName} (${transactionType === 'land' ? '토지' : '상가'})를 강제로 재수집하시겠습니까?\n\n⚠️ TTL 60일을 무시하고 즉시 수집을 시작합니다.`)) {
     return;
   }
 
+  const collectionKey = `${lawdCd}_${transactionType}`;
+
+  // 이미 수집 중이면 중복 실행 방지
+  if (activeCollections.has(collectionKey)) {
+    showError('이미 수집이 진행 중입니다.');
+    return;
+  }
+
   showLoading(true);
   showSuccess(`🔄 ${regionName} 수집 시작...`);
+
+  // 현재 레코드 수 저장
+  const { data: startStatus } = await supabase.rpc('get_region_collection_info', {
+    p_lawd_cd: lawdCd
+  });
+  const startCount = startStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
+
+  // 버튼 상태 변경 및 진행 모니터링 시작
+  const button = event?.target;
+  if (button) {
+    button.disabled = true;
+    button.textContent = '⏳ 수집중...';
+    button.style.backgroundColor = '#ffc107';
+  }
+
+  // 진행 상태 폴링 시작 (5초마다)
+  const intervalId = setInterval(async () => {
+    try {
+      const { data: currentStatus } = await supabase.rpc('get_region_collection_info', {
+        p_lawd_cd: lawdCd
+      });
+      const currentCount = currentStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
+      const newRecords = currentCount - startCount;
+
+      if (newRecords > 0 && button) {
+        button.textContent = `⏳ ${newRecords}건 수집됨...`;
+      }
+    } catch (e) {
+      console.error('진행 상태 확인 오류:', e);
+    }
+  }, 5000);
+
+  activeCollections.set(collectionKey, { startCount, intervalId });
 
   try {
     // molit-transactions 직접 호출 (force: true)
@@ -3129,6 +3173,20 @@ async function forceCollectRegion(lawdCd, transactionType, regionName) {
   } catch (error) {
     showError(`❌ 수집 실패: ${error.message}`);
   } finally {
+    // 진행 상태 폴링 중지
+    const collection = activeCollections.get(collectionKey);
+    if (collection?.intervalId) {
+      clearInterval(collection.intervalId);
+    }
+    activeCollections.delete(collectionKey);
+
+    // 버튼 상태 복원
+    if (button) {
+      button.disabled = false;
+      button.textContent = '🔄 재수집';
+      button.style.backgroundColor = '';
+    }
+
     showLoading(false);
   }
 }
