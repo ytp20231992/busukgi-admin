@@ -1656,59 +1656,222 @@ function formatNumber(num) {
 function renderAmbiguousList(items) {
   const container = document.getElementById('pnuAmbiguousList');
 
-  let html = '<table style="width: 100%; font-size: 11px;">';
-  html += '<thead><tr><th>거래ID</th><th>지번</th><th>후보수</th><th>등록일</th></tr></thead><tbody>';
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); font-size: 12px;">미해결 중복 후보 없음</p>';
+    return;
+  }
 
-  items.slice(0, 20).forEach(item => {
+  let html = '';
+
+  items.slice(0, 10).forEach((item, idx) => {
+    const tx = item.molit_land_transactions || {};
+    const candidates = item.candidates || [];
     const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+
     html += `
-      <tr>
-        <td>${item.transaction_id}</td>
-        <td>${escapeHtml(item.jibun || '-')}</td>
-        <td><span class="badge warning">${item.candidate_count}건</span></td>
-        <td>${createdAt}</td>
-      </tr>
+      <div class="ambiguous-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+        <!-- 거래 정보 헤더 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div>
+            <span style="font-weight: 600; color: var(--warning);">거래 #${item.transaction_id}</span>
+            <span style="color: var(--text-secondary); font-size: 11px; margin-left: 8px;">${createdAt}</span>
+          </div>
+          <button onclick="deleteAmbiguousRecord(${item.id}, ${item.transaction_id})"
+                  style="background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;"
+                  title="이 기록 삭제 (다시 매칭 대상이 됨)">
+            삭제
+          </button>
+        </div>
+
+        <!-- 거래 상세 정보 -->
+        <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 11px;">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${tx.lawd_cd || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">동:</span> <strong>${escapeHtml(tx.umd_nm || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">지번:</span> <strong style="color: var(--warning);">${escapeHtml(tx.jibun || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">면적:</span> <strong>${tx.deal_area || '-'}㎡</strong></div>
+            <div><span style="color: var(--text-tertiary);">지목:</span> <strong>${escapeHtml(tx.jimok || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">용도:</span> <strong>${escapeHtml(tx.land_use || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">후보:</span> <strong style="color: var(--warning);">${item.candidate_count}건</strong></div>
+          </div>
+        </div>
+
+        <!-- 후보 목록 -->
+        <div style="font-size: 11px;">
+          <div style="color: var(--text-secondary); margin-bottom: 6px; font-weight: 500;">후보 필지 (클릭하여 선택):</div>
+          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto;">
+            ${candidates.map((c, cidx) => {
+              const areaDiff = tx.deal_area ? Math.abs(parseFloat(c.lndpclAr) - tx.deal_area).toFixed(1) : '-';
+              const areaMatch = tx.deal_area && Math.abs(parseFloat(c.lndpclAr) - tx.deal_area) < 1;
+              return `
+                <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;"
+                     onmouseover="this.style.borderColor='var(--accent-cyan)'"
+                     onmouseout="this.style.borderColor='transparent'"
+                     onclick="selectAmbiguousCandidate(${item.transaction_id}, '${c.pnu}', ${item.id})">
+                  <span style="color: var(--text-tertiary);">${cidx + 1}.</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">${c.pnu}</span>
+                  <span style="color: var(--text-primary);">${c.mnnmSlno || '-'}</span>
+                  <span style="color: ${areaMatch ? 'var(--success)' : 'var(--text-secondary)'};">${c.lndpclAr}㎡</span>
+                  <span style="color: var(--text-tertiary); font-size: 10px;">(차이: ${areaDiff}㎡)</span>
+                  <span style="color: var(--text-secondary);">${c.lndcgrCodeNm || '-'}</span>
+                  <span style="margin-left: auto; color: var(--success); font-size: 10px;">선택 →</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
     `;
   });
 
-  html += '</tbody></table>';
-
-  if (items.length > 20) {
-    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  if (items.length > 10) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary); text-align: center;">외 ${items.length - 10}건 더 있음</p>`;
   }
 
   container.innerHTML = html;
 }
 
+// 중복 후보 중 하나 선택하여 PNU 확정
+async function selectAmbiguousCandidate(transactionId, pnu, ambiguousId) {
+  if (!confirm(`이 PNU를 선택하시겠습니까?\n\nPNU: ${pnu}\n거래ID: ${transactionId}`)) {
+    return;
+  }
+
+  try {
+    // 1. molit_land_transactions 테이블의 pnu 업데이트
+    const { error: updateError } = await supabase
+      .from('molit_land_transactions')
+      .update({ pnu: pnu })
+      .eq('id', transactionId);
+
+    if (updateError) throw updateError;
+
+    // 2. land_matching_ambiguous 레코드 해결 처리
+    const { error: resolveError } = await supabase
+      .from('land_matching_ambiguous')
+      .update({
+        resolved_at: new Date().toISOString(),
+        resolved_pnu: pnu
+      })
+      .eq('id', ambiguousId);
+
+    if (resolveError) throw resolveError;
+
+    showSuccess(`PNU 선택 완료: ${pnu}`);
+    await loadPnuStats(); // 목록 새로고침
+  } catch (error) {
+    showError('PNU 선택 실패: ' + error.message);
+  }
+}
+
+// 중복 후보 기록 삭제 (다시 매칭 대상이 됨)
+async function deleteAmbiguousRecord(ambiguousId, transactionId) {
+  if (!confirm(`이 중복 후보 기록을 삭제하시겠습니까?\n\n거래ID: ${transactionId}\n삭제 후 다시 매칭 대상이 됩니다.`)) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('land_matching_ambiguous')
+      .delete()
+      .eq('id', ambiguousId);
+
+    if (error) throw error;
+
+    showSuccess('기록 삭제 완료');
+    await loadPnuStats();
+  } catch (error) {
+    showError('삭제 실패: ' + error.message);
+  }
+}
+
 function renderFailedList(items) {
   const container = document.getElementById('pnuFailedList');
 
-  let html = '<table style="width: 100%; font-size: 11px;">';
-  html += '<thead><tr><th>거래ID</th><th>실패 사유</th><th>재시도</th></tr></thead><tbody>';
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); font-size: 12px;">매칭 실패 건 없음</p>';
+    return;
+  }
 
-  items.slice(0, 20).forEach(item => {
-    const reasonText = {
-      'no_ldcode': '법정동코드 없음',
-      'api_error': 'API 오류',
-      'no_match': '매칭 불가'
-    }[item.fail_reason] || item.fail_reason;
+  let html = '';
+
+  items.slice(0, 10).forEach((item, idx) => {
+    const tx = item.molit_land_transactions || {};
+    const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+
+    const reasonInfo = {
+      'no_ldcode': { text: '법정동코드 없음', color: 'var(--warning)', icon: '🏷️', desc: '법정동 코드를 찾을 수 없음' },
+      'api_error': { text: 'API 오류', color: 'var(--danger)', icon: '🔌', desc: 'VWorld API 호출 실패' },
+      'no_match': { text: '조건 불일치', color: 'var(--text-secondary)', icon: '🔍', desc: '지번/면적/지목 조건에 맞는 필지 없음' }
+    }[item.fail_reason] || { text: item.fail_reason, color: 'var(--text-secondary)', icon: '❓', desc: '' };
 
     html += `
-      <tr>
-        <td>${item.transaction_id}</td>
-        <td><span class="badge danger">${reasonText}</span></td>
-        <td>${item.retry_count || 0}회</td>
-      </tr>
+      <div class="failed-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-left: 3px solid ${reasonInfo.color}; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+        <!-- 헤더 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">${reasonInfo.icon}</span>
+            <span style="font-weight: 600; color: var(--danger);">거래 #${item.transaction_id}</span>
+            <span style="background: ${reasonInfo.color}; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">${reasonInfo.text}</span>
+            <span style="color: var(--text-tertiary); font-size: 10px;">재시도 ${item.retry_count || 0}회</span>
+          </div>
+          <button onclick="deleteFailedRecord(${item.id}, ${item.transaction_id})"
+                  style="background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;"
+                  title="이 기록 삭제 (다시 매칭 대상이 됨)">
+            삭제
+          </button>
+        </div>
+
+        <!-- 거래 상세 정보 -->
+        <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; font-size: 11px;">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${tx.lawd_cd || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">동:</span> <strong>${escapeHtml(tx.umd_nm || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">지번:</span> <strong style="color: var(--warning);">${escapeHtml(tx.jibun || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">면적:</span> <strong>${tx.deal_area || '-'}㎡</strong></div>
+            <div><span style="color: var(--text-tertiary);">지목:</span> <strong>${escapeHtml(tx.jimok || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">용도:</span> <strong>${escapeHtml(tx.land_use || '-')}</strong></div>
+            <div><span style="color: var(--text-tertiary);">등록:</span> <strong>${createdAt}</strong></div>
+          </div>
+          ${item.fail_details ? `
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+              <span style="color: var(--text-tertiary);">상세:</span>
+              <span style="color: var(--text-secondary); font-size: 10px;">${escapeHtml(item.fail_details)}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
     `;
   });
 
-  html += '</tbody></table>';
-
-  if (items.length > 20) {
-    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">외 ${items.length - 20}건 더...</p>`;
+  if (items.length > 10) {
+    html += `<p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary); text-align: center;">외 ${items.length - 10}건 더 있음</p>`;
   }
 
   container.innerHTML = html;
+}
+
+// 실패 기록 삭제 (다시 매칭 대상이 됨)
+async function deleteFailedRecord(failedId, transactionId) {
+  if (!confirm(`이 실패 기록을 삭제하시겠습니까?\n\n거래ID: ${transactionId}\n삭제 후 다시 매칭 대상이 됩니다.`)) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('land_matching_fail')
+      .delete()
+      .eq('id', failedId);
+
+    if (error) throw error;
+
+    showSuccess('기록 삭제 완료');
+    await loadPnuStats();
+  } catch (error) {
+    showError('삭제 실패: ' + error.message);
+  }
 }
 
 async function runPnuBatchMatch() {
