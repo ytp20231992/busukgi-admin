@@ -3129,29 +3129,33 @@ async function forceCollectRegion(lawdCd, transactionType, regionName) {
     button.style.backgroundColor = '#ffc107';
   }
 
-  // 진행 상태 폴링 시작 (5초마다)
+  // 진행 상태 폴링 시작 (3초마다) - molit_collection_status에서 월별 수집 현황 조회
   const intervalId = setInterval(async () => {
     try {
-      const rpcResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_region_collection_info`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ p_lawd_cd: lawdCd })
-      });
-      const currentStatus = await rpcResponse.json();
-      const currentCount = currentStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
-      const newRecords = currentCount - startCount;
+      // molit_collection_status에서 해당 지역의 수집된 월 수와 총 건수 조회
+      const statusResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/molit_collection_status?lawd_cd=eq.${lawdCd}&transaction_type=eq.${transactionType}&select=year_month,count`,
+        {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          }
+        }
+      );
+      const statusData = await statusResponse.json();
 
-      if (newRecords > 0 && button) {
-        button.textContent = `⏳ ${newRecords}건 수집됨...`;
+      if (Array.isArray(statusData) && statusData.length > 0) {
+        const monthsCollected = statusData.length;
+        const totalRecords = statusData.reduce((sum, s) => sum + (s.count || 0), 0);
+
+        if (button) {
+          button.textContent = `⏳ ${monthsCollected}개월 / ${totalRecords.toLocaleString()}건`;
+        }
       }
     } catch (e) {
       console.error('진행 상태 확인 오류:', e);
     }
-  }, 5000);
+  }, 3000);
 
   activeCollections.set(collectionKey, { startCount, intervalId });
 
