@@ -1667,6 +1667,7 @@ function renderAmbiguousList(items) {
     const tx = item.molit_land_transactions || {};
     const candidates = item.candidates || [];
     const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+    const regionName = getLawdCodeName(tx.lawd_cd) || tx.lawd_cd || '-';
 
     html += `
       <div class="ambiguous-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
@@ -1686,7 +1687,7 @@ function renderAmbiguousList(items) {
         <!-- 거래 상세 정보 -->
         <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 11px;">
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${tx.lawd_cd || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${escapeHtml(regionName)}</strong></div>
             <div><span style="color: var(--text-tertiary);">동:</span> <strong>${escapeHtml(tx.umd_nm || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">지번:</span> <strong style="color: var(--warning);">${escapeHtml(tx.jibun || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}</strong></div>
@@ -1700,22 +1701,35 @@ function renderAmbiguousList(items) {
         <!-- 후보 목록 -->
         <div style="font-size: 11px;">
           <div style="color: var(--text-secondary); margin-bottom: 6px; font-weight: 500;">후보 필지 (클릭하여 선택):</div>
-          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto;">
+          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
             ${candidates.map((c, cidx) => {
               const areaDiff = tx.deal_area ? Math.abs(parseFloat(c.lndpclAr) - tx.deal_area).toFixed(1) : '-';
               const areaMatch = tx.deal_area && Math.abs(parseFloat(c.lndpclAr) - tx.deal_area) < 1;
+              const jimokMatch = tx.jimok && c.lndcgrCodeNm && tx.jimok === c.lndcgrCodeNm;
               return `
-                <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;"
-                     onmouseover="this.style.borderColor='var(--accent-cyan)'"
-                     onmouseout="this.style.borderColor='transparent'"
+                <div style="display: grid; grid-template-columns: 24px 1fr; gap: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
+                     onmouseover="this.style.borderColor='var(--accent-cyan)'; this.style.background='var(--bg-secondary)'"
+                     onmouseout="this.style.borderColor='transparent'; this.style.background='var(--bg-tertiary)'"
                      onclick="selectAmbiguousCandidate(${item.transaction_id}, '${c.pnu}', ${item.id})">
-                  <span style="color: var(--text-tertiary);">${cidx + 1}.</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">${c.pnu}</span>
-                  <span style="color: var(--text-primary);">${c.mnnmSlno || '-'}</span>
-                  <span style="color: ${areaMatch ? 'var(--success)' : 'var(--text-secondary)'};">${c.lndpclAr}㎡</span>
-                  <span style="color: var(--text-tertiary); font-size: 10px;">(차이: ${areaDiff}㎡)</span>
-                  <span style="color: var(--text-secondary);">${c.lndcgrCodeNm || '-'}</span>
-                  <span style="margin-left: auto; color: var(--success); font-size: 10px;">선택 →</span>
+                  <span style="color: var(--text-tertiary); font-weight: 600;">${cidx + 1}</span>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <span style="color: var(--text-primary); font-weight: 500;">${c.mnnmSlno || '-'}</span>
+                      <span style="color: ${areaMatch ? 'var(--success)' : 'var(--text-secondary)'}; font-weight: ${areaMatch ? '600' : '400'};">${c.lndpclAr}㎡</span>
+                      <span style="color: var(--text-tertiary); font-size: 10px;">(차이: <span style="color: ${parseFloat(areaDiff) < 1 ? 'var(--success)' : parseFloat(areaDiff) < 5 ? 'var(--warning)' : 'var(--danger)'};">${areaDiff}㎡</span>)</span>
+                      <span style="margin-left: auto; background: var(--success); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">선택</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 10px;">
+                      <span style="color: ${jimokMatch ? 'var(--success)' : 'var(--text-secondary)'};">
+                        <span style="color: var(--text-tertiary);">지목:</span> ${c.lndcgrCodeNm || '-'}
+                        ${jimokMatch ? '✓' : ''}
+                      </span>
+                      <span style="color: var(--text-secondary);">
+                        <span style="color: var(--text-tertiary);">용도:</span> ${c.prposArea1Nm || '-'}
+                      </span>
+                      <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-tertiary); font-size: 9px;">${c.pnu}</span>
+                    </div>
+                  </div>
                 </div>
               `;
             }).join('')}
@@ -1799,6 +1813,7 @@ function renderFailedList(items) {
   items.slice(0, 10).forEach((item, idx) => {
     const tx = item.molit_land_transactions || {};
     const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
+    const regionName = getLawdCodeName(tx.lawd_cd) || tx.lawd_cd || '-';
 
     const reasonInfo = {
       'no_ldcode': { text: '법정동코드 없음', color: 'var(--warning)', icon: '🏷️', desc: '법정동 코드를 찾을 수 없음' },
@@ -1826,7 +1841,7 @@ function renderFailedList(items) {
         <!-- 거래 상세 정보 -->
         <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; font-size: 11px;">
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${tx.lawd_cd || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${escapeHtml(regionName)}</strong></div>
             <div><span style="color: var(--text-tertiary);">동:</span> <strong>${escapeHtml(tx.umd_nm || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">지번:</span> <strong style="color: var(--warning);">${escapeHtml(tx.jibun || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}</strong></div>
