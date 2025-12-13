@@ -6,6 +6,7 @@
 // ============================================
 const SUPABASE_URL = 'https://asdqtfuvjlsgjazseekm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZHF0ZnV2amxzZ2phenNlZWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NzAwODAsImV4cCI6MjA3ODM0NjA4MH0.wLnBozm_DHUQpM68PZXXJ_02u_tW3t5KVcupove926U';
+const SUPABASE_FUNCTIONS_URL = SUPABASE_URL + '/functions/v1';  // Edge Functions URL
 const ADMIN_KAKAO_ID = '4519453813'; // 환경변수와 동일하게 설정
 
 // ============================================
@@ -1857,13 +1858,16 @@ async function deleteAmbiguousRecord(ambiguousId, transactionId) {
 }
 
 // 미해결 중복 후보들의 소유권변동 정보 조회 (fetch_ownership_info 액션)
-async function fetchOwnershipInfoForAmbiguous() {
+async function fetchOwnershipInfoForAmbiguous(e) {
+  const btn = e?.target || event?.target;
+  if (!btn) return;
+
+  const originalText = btn.innerHTML;
+
   if (!confirm('미해결 중복 후보들의 소유권변동 정보를 조회합니다.\n\nVWorld API를 호출하므로 시간이 걸릴 수 있습니다.\n계속하시겠습니까?')) {
     return;
   }
 
-  const btn = event.target;
-  const originalText = btn.innerHTML;
   btn.innerHTML = '⏳ 조회 중...';
   btn.disabled = true;
 
@@ -1897,13 +1901,16 @@ async function fetchOwnershipInfoForAmbiguous() {
 }
 
 // 소유권변동일 기반 자동 해결 (resolve_ambiguous_by_ownership 액션)
-async function resolveAmbiguousByOwnership() {
+async function resolveAmbiguousByOwnership(e) {
+  const btn = e?.target || event?.target;
+  if (!btn) return;
+
+  const originalText = btn.innerHTML;
+
   if (!confirm('소유권변동일 기반으로 중복 후보를 자동 해결합니다.\n\n※ high confidence (계약일 + 45일 이내 매매) 건만 자동 처리됩니다.\n계속하시겠습니까?')) {
     return;
   }
 
-  const btn = event.target;
-  const originalText = btn.innerHTML;
   btn.innerHTML = '⏳ 처리 중...';
   btn.disabled = true;
 

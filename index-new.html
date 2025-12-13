@@ -1559,10 +1559,10 @@
                 <div class="panel-header">
                   <span class="panel-title" style="color: var(--accent-warning);">⚠️ 중복 후보</span>
                   <div style="display: flex; gap: 6px;">
-                    <button class="btn btn-outline btn-sm" onclick="fetchOwnershipInfoForAmbiguous()" title="미해결 중복 후보들의 소유권변동 정보 조회">
+                    <button class="btn btn-outline btn-sm" onclick="fetchOwnershipInfoForAmbiguous(event)" title="미해결 중복 후보들의 소유권변동 정보 조회">
                       🔍 소유정보 조회
                     </button>
-                    <button class="btn btn-outline btn-sm" style="border-color: var(--accent-success); color: var(--accent-success);" onclick="resolveAmbiguousByOwnership()" title="소유권변동일 기반 자동 해결 (high confidence만)">
+                    <button class="btn btn-outline btn-sm" style="border-color: var(--accent-success); color: var(--accent-success);" onclick="resolveAmbiguousByOwnership(event)" title="소유권변동일 기반 자동 해결 (high confidence만)">
                       ✨ 자동 해결
                     </button>
                   </div>
