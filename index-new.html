@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SanGa Admin</title>
+  <title>SanGa Admin - 관리자 대시보드</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
@@ -28,6 +28,7 @@
       --accent-warning: #f59e0b;
       --accent-danger: #ef4444;
       --accent-info: #06b6d4;
+      --accent-purple: #8b5cf6;
 
       /* Border */
       --border: #27272a;
@@ -35,13 +36,7 @@
       --border-active: #52525b;
 
       /* Sidebar */
-      --sidebar-width: 240px;
-      --sidebar-collapsed: 64px;
-
-      /* Shadows */
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+      --sidebar-width: 220px;
     }
 
     * {
@@ -76,11 +71,6 @@
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      transition: width 0.2s ease;
-    }
-
-    .sidebar.collapsed {
-      width: var(--sidebar-collapsed);
     }
 
     .sidebar-header {
@@ -95,33 +85,29 @@
     }
 
     .sidebar-logo-icon {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-info));
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       color: white;
     }
 
     .sidebar-logo-text {
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
       color: var(--text-primary);
     }
 
     .sidebar-logo-text span {
       color: var(--text-tertiary);
       font-weight: 400;
-      font-size: 12px;
+      font-size: 11px;
       display: block;
-    }
-
-    .sidebar.collapsed .sidebar-logo-text {
-      display: none;
     }
 
     /* Navigation */
@@ -132,11 +118,11 @@
     }
 
     .nav-section {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .nav-section-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -145,14 +131,10 @@
       margin-bottom: 8px;
     }
 
-    .sidebar.collapsed .nav-section-label {
-      display: none;
-    }
-
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       padding: 10px 12px;
       border-radius: 6px;
       color: var(--text-secondary);
@@ -160,6 +142,7 @@
       transition: all 0.15s ease;
       margin-bottom: 2px;
       position: relative;
+      font-size: 13px;
     }
 
     .nav-item:hover {
@@ -183,23 +166,7 @@
     }
 
     .nav-item-icon {
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .nav-item-text {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .sidebar.collapsed .nav-item-text {
-      display: none;
+      font-size: 14px;
     }
 
     .nav-item-badge {
@@ -209,33 +176,7 @@
       font-weight: 600;
       padding: 2px 6px;
       border-radius: 10px;
-      min-width: 18px;
-      text-align: center;
-    }
-
-    .sidebar.collapsed .nav-item-badge {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      min-width: 8px;
-      height: 8px;
-      padding: 0;
-      font-size: 0;
-    }
-
-    /* Sub navigation */
-    .nav-sub {
-      margin-left: 32px;
-      margin-top: 4px;
-    }
-
-    .nav-sub .nav-item {
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-
-    .sidebar.collapsed .nav-sub {
-      display: none;
+      margin-left: auto;
     }
 
     /* Sidebar footer */
@@ -244,23 +185,61 @@
       border-top: 1px solid var(--border);
     }
 
-    .sidebar-toggle {
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-user-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-purple);
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 12px;
+    }
+
+    .sidebar-user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user-role {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .sidebar-logout {
       width: 100%;
       padding: 8px;
-      background: var(--bg-tertiary);
-      border: none;
+      background: transparent;
+      border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text-secondary);
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .sidebar-toggle:hover {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
+    .sidebar-logout:hover {
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
     }
 
     /* Main content */
@@ -269,6 +248,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
     }
 
     /* Top bar */
@@ -296,17 +276,18 @@
     }
 
     .topbar-sync {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .topbar-sync .dot {
-      display: inline-block;
       width: 6px;
       height: 6px;
       background: var(--accent-success);
       border-radius: 50%;
-      margin-right: 6px;
     }
 
     /* Content area */
@@ -316,7 +297,7 @@
       padding: 24px;
     }
 
-    /* Sections - hidden by default */
+    /* Sections */
     .section {
       display: none;
     }
@@ -325,11 +306,58 @@
       display: block;
     }
 
+    /* Stats cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      transition: all 0.15s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .stat-card .stat-change {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+    }
+
+    .stat-card.accent-blue { border-left: 3px solid var(--accent-primary); }
+    .stat-card.accent-green { border-left: 3px solid var(--accent-success); }
+    .stat-card.accent-yellow { border-left: 3px solid var(--accent-warning); }
+    .stat-card.accent-red { border-left: 3px solid var(--accent-danger); }
+    .stat-card.accent-cyan { border-left: 3px solid var(--accent-info); }
+    .stat-card.accent-purple { border-left: 3px solid var(--accent-purple); }
+
     /* Cards */
     .card {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
     }
 
@@ -351,334 +379,12 @@
       padding: 20px;
     }
 
-    /* Stats cards grid */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      transition: all 0.15s ease;
-    }
-
-    .stat-card:hover {
-      border-color: var(--border-hover);
-    }
-
-    .stat-card .stat-label {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      margin-bottom: 8px;
-    }
-
-    .stat-card .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-primary);
-      line-height: 1;
-    }
-
-    .stat-card .stat-change {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      margin-top: 8px;
-    }
-
-    .stat-card .stat-change.positive {
-      color: var(--accent-success);
-    }
-
-    .stat-card .stat-change.negative {
-      color: var(--accent-danger);
-    }
-
-    .stat-card.accent-blue { border-left: 3px solid var(--accent-primary); }
-    .stat-card.accent-green { border-left: 3px solid var(--accent-success); }
-    .stat-card.accent-yellow { border-left: 3px solid var(--accent-warning); }
-    .stat-card.accent-red { border-left: 3px solid var(--accent-danger); }
-    .stat-card.accent-cyan { border-left: 3px solid var(--accent-info); }
-
-    /* Alert cards */
-    .alerts-section {
-      margin-bottom: 24px;
-    }
-
-    .alert-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .alert-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .alert-item:hover {
-      border-color: var(--border-hover);
-      background: var(--bg-tertiary);
-    }
-
-    .alert-item .alert-icon {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .alert-item .alert-icon.critical { background: var(--accent-danger); }
-    .alert-item .alert-icon.warning { background: var(--accent-warning); }
-    .alert-item .alert-icon.info { background: var(--accent-info); }
-
-    .alert-item .alert-text {
-      flex: 1;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .alert-item .alert-action {
-      font-size: 12px;
-      color: var(--accent-primary);
-      white-space: nowrap;
-    }
-
-    /* Pipeline visualization */
-    .pipeline-section {
-      margin-bottom: 24px;
-    }
-
-    .pipeline-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .pipeline-tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--bg-tertiary);
-      padding: 4px;
-      border-radius: 8px;
-    }
-
-    .pipeline-tab {
-      padding: 8px 16px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .pipeline-tab.active {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-    }
-
-    .pipeline-tab:hover:not(.active) {
-      color: var(--text-primary);
-    }
-
-    .pipeline-flow {
-      display: flex;
-      align-items: stretch;
-      gap: 0;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
-      margin-bottom: 16px;
-    }
-
-    .pipeline-stage {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0 20px;
-      position: relative;
-    }
-
-    .pipeline-stage:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 24px;
-      height: 2px;
-      background: var(--border);
-    }
-
-    .pipeline-stage:not(:last-child)::before {
-      content: '';
-      position: absolute;
-      right: -4px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 0;
-      height: 0;
-      border-top: 5px solid transparent;
-      border-bottom: 5px solid transparent;
-      border-left: 6px solid var(--border);
-    }
-
-    .pipeline-stage-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      margin-bottom: 12px;
-    }
-
-    .pipeline-stage-icon.collected { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); }
-    .pipeline-stage-icon.pending { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
-    .pipeline-stage-icon.completed { background: rgba(34, 197, 94, 0.15); color: var(--accent-success); }
-    .pipeline-stage-icon.failed { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
-
-    .pipeline-stage-label {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      margin-bottom: 4px;
-    }
-
-    .pipeline-stage-value {
-      font-size: 24px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-primary);
-    }
-
-    .pipeline-stage-bar {
-      width: 100%;
-      height: 4px;
-      background: var(--bg-tertiary);
-      border-radius: 2px;
-      margin-top: 12px;
-      overflow: hidden;
-    }
-
-    .pipeline-stage-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.3s ease;
-    }
-
-    .pipeline-stage-bar-fill.blue { background: var(--accent-primary); }
-    .pipeline-stage-bar-fill.yellow { background: var(--accent-warning); }
-    .pipeline-stage-bar-fill.green { background: var(--accent-success); }
-    .pipeline-stage-bar-fill.red { background: var(--accent-danger); }
-
-    /* Progress section */
-    .progress-section {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .progress-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .progress-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .progress-value {
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent-primary);
-    }
-
-    .progress-bar {
-      height: 8px;
-      background: var(--bg-tertiary);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
-      border-radius: 4px;
-      transition: width 0.3s ease;
-    }
-
-    .progress-target {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      margin-top: 8px;
-      text-align: right;
-    }
-
-    /* Three column grid */
-    .three-col-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .panel {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .panel-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .panel-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .panel-body {
-      padding: 16px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
     /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       padding: 8px 16px;
       font-size: 13px;
       font-weight: 500;
@@ -686,6 +392,7 @@
       border: 1px solid transparent;
       cursor: pointer;
       transition: all 0.15s ease;
+      font-family: inherit;
     }
 
     .btn-primary {
@@ -706,6 +413,15 @@
       background: #16a34a;
     }
 
+    .btn-danger {
+      background: var(--accent-danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
     .btn-outline {
       background: transparent;
       border-color: var(--border);
@@ -721,6 +437,495 @@
     .btn-sm {
       padding: 6px 12px;
       font-size: 12px;
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: var(--bg-tertiary);
+    }
+
+    th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    td small {
+      color: var(--text-tertiary);
+      font-size: 11px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    tbody tr {
+      transition: all 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-success, .badge.active { background: rgba(34, 197, 94, 0.15); color: var(--accent-success); }
+    .badge-warning, .badge.warning { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+    .badge-danger, .badge.blocked, .badge.danger { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
+    .badge-info { background: rgba(6, 182, 212, 0.15); color: var(--accent-info); }
+    .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .badge.free { background: var(--bg-tertiary); color: var(--text-secondary); }
+    .badge.pro { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); }
+    .badge.premium { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .badge.demo { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+    .badge.expired { background: rgba(113, 113, 122, 0.15); color: var(--text-tertiary); }
+    .badge.kakao { background: rgba(254, 229, 0, 0.15); color: #d9a000; }
+    .badge.password { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); }
+
+    /* Action buttons */
+    .action-btn {
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-right: 4px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .action-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .action-btn.primary {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-primary);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .action-btn.primary:hover {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .action-btn.danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-danger);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .action-btn.danger:hover {
+      background: var(--accent-danger);
+      color: white;
+    }
+
+    .action-btn.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-success);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .action-btn.success:hover {
+      background: var(--accent-success);
+      color: white;
+    }
+
+    .action-btn.secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+
+    .action-btn.secondary:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    /* Modals */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content.wide {
+      max-width: 900px;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .form-actions button {
+      flex: 1;
+      padding: 12px;
+    }
+
+    /* User detail rows */
+    .user-detail-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .user-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .user-detail-row .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .user-detail-row .value {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border-radius: 6px;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin: 0 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Loading & Messages */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      color: var(--text-tertiary);
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--accent-danger);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    .success-box {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent-success);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .success-box.show {
+      display: block;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-tertiary);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state .message {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .submessage {
+      font-size: 13px;
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Three column grid */
+    .three-col-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .panel-body {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
     }
 
     /* List items */
@@ -751,9 +956,6 @@
     .list-item-title {
       font-size: 13px;
       color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .list-item-subtitle {
@@ -767,84 +969,96 @@
       color: var(--text-secondary);
     }
 
-    /* Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-weight: 500;
-      border-radius: 4px;
-    }
-
-    .badge-success { background: rgba(34, 197, 94, 0.15); color: var(--accent-success); }
-    .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
-    .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
-    .badge-info { background: rgba(6, 182, 212, 0.15); color: var(--accent-info); }
-
-    /* Insight box */
-    .insight-box {
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 6px;
-      padding: 12px;
-      margin-top: 12px;
-    }
-
-    .insight-box-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent-primary);
-      margin-bottom: 6px;
-    }
-
-    .insight-box-content {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    /* Bar chart */
-    .bar-chart {
+    /* Sub tabs */
+    .sub-tabs {
       display: flex;
-      flex-direction: column;
       gap: 8px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .bar-chart-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .bar-chart-label {
-      width: 80px;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .bar-chart-bar {
-      flex: 1;
-      height: 8px;
+    .sub-tab-btn {
+      padding: 8px 16px;
       background: var(--bg-tertiary);
-      border-radius: 4px;
-      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
-    .bar-chart-fill {
-      height: 100%;
-      border-radius: 4px;
+    .sub-tab-btn:hover:not(.active) {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
     }
 
-    .bar-chart-fill.danger { background: var(--accent-danger); }
-    .bar-chart-fill.warning { background: var(--accent-warning); }
+    .sub-tab-btn.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
 
-    .bar-chart-value {
-      width: 50px;
+    .subtab-content {
+      display: none;
+    }
+
+    .subtab-content.active {
+      display: block;
+    }
+
+    /* Login history */
+    .login-history-table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 12px;
-      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .login-history-table th {
+      background: var(--bg-tertiary);
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
       color: var(--text-tertiary);
-      text-align: right;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .login-history-table td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .login-history-table tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .device-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    .device-badge.desktop {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-primary);
+    }
+
+    .device-badge.mobile {
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .device-badge.tablet {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-warning);
     }
 
     /* Responsive */
@@ -882,24 +1096,17 @@
       background: var(--border-active);
     }
 
-    /* Utilities */
     .text-success { color: var(--accent-success); }
     .text-warning { color: var(--accent-warning); }
     .text-danger { color: var(--accent-danger); }
     .text-info { color: var(--accent-info); }
-    .text-muted { color: var(--text-tertiary); }
-
-    .mt-4 { margin-top: 16px; }
-    .mb-4 { margin-bottom: 16px; }
-    .gap-4 { gap: 16px; }
-
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
   <div class="app-layout">
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <div class="sidebar-logo-icon">SA</div>
@@ -912,88 +1119,72 @@
 
       <nav class="sidebar-nav">
         <div class="nav-section">
-          <div class="nav-section-label">Main</div>
-          <div class="nav-item active" data-section="overview" onclick="switchSection('overview')">
-            <span class="nav-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-            </span>
-            <span class="nav-item-text">Overview</span>
-            <span class="nav-item-badge" id="alertBadge">3</span>
+          <div class="nav-section-label">대시보드</div>
+          <div class="nav-item active" data-tab="overview" onclick="switchSection('overview')">
+            <span class="nav-item-icon">📊</span>
+            <span>개요</span>
+            <span class="nav-item-badge" id="alertBadge" style="display: none;">0</span>
           </div>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">Manage</div>
-          <div class="nav-item" data-section="users" onclick="switchSection('users')">
-            <span class="nav-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </span>
-            <span class="nav-item-text">Users</span>
+          <div class="nav-section-label">사용자</div>
+          <div class="nav-item" data-tab="users" onclick="switchSection('users')">
+            <span class="nav-item-icon">👥</span>
+            <span>회원 관리</span>
           </div>
-          <div class="nav-sub" id="usersSubNav">
-            <div class="nav-item" data-section="users-members" onclick="switchSection('users-members')">
-              <span class="nav-item-text">Members</span>
-            </div>
-            <div class="nav-item" data-section="users-deleted" onclick="switchSection('users-deleted')">
-              <span class="nav-item-text">Deleted</span>
-            </div>
-            <div class="nav-item" data-section="users-groups" onclick="switchSection('users-groups')">
-              <span class="nav-item-text">Groups</span>
-            </div>
+          <div class="nav-item" data-tab="deleted" onclick="switchSection('deleted')">
+            <span class="nav-item-icon">🗑️</span>
+            <span>탈퇴 회원</span>
+          </div>
+          <div class="nav-item" data-tab="groups" onclick="switchSection('groups')">
+            <span class="nav-item-icon">📁</span>
+            <span>그룹 관리</span>
           </div>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">Data</div>
-          <div class="nav-item" data-section="pipeline" onclick="switchSection('pipeline')">
-            <span class="nav-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </span>
-            <span class="nav-item-text">Data Pipeline</span>
+          <div class="nav-section-label">데이터 파이프라인</div>
+          <div class="nav-item" data-tab="molit-status" onclick="switchSection('molit-status')">
+            <span class="nav-item-icon">📥</span>
+            <span>수집 현황</span>
           </div>
-          <div class="nav-sub" id="pipelineSubNav">
-            <div class="nav-item" data-section="pipeline-land" onclick="switchSection('pipeline-land')">
-              <span class="nav-item-text">Land</span>
-            </div>
-            <div class="nav-item" data-section="pipeline-commercial" onclick="switchSection('pipeline-commercial')">
-              <span class="nav-item-text">Commercial</span>
-            </div>
+          <div class="nav-item" data-tab="pnu-matcher" onclick="switchSection('pnu-matcher')">
+            <span class="nav-item-icon">🔗</span>
+            <span>PNU 매칭</span>
           </div>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">System</div>
-          <div class="nav-item" data-section="settings" onclick="switchSection('settings')">
-            <span class="nav-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </span>
-            <span class="nav-item-text">Settings</span>
+          <div class="nav-section-label">분석</div>
+          <div class="nav-item" data-tab="lookup-stats" onclick="switchSection('lookup-stats')">
+            <span class="nav-item-icon">🔍</span>
+            <span>조회 통계</span>
+          </div>
+          <div class="nav-item" data-tab="session-stats" onclick="switchSection('session-stats')">
+            <span class="nav-item-icon">📈</span>
+            <span>세션 통계</span>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">시스템</div>
+          <div class="nav-item" data-tab="settings" onclick="switchSection('settings')">
+            <span class="nav-item-icon">⚙️</span>
+            <span>앱 설정</span>
           </div>
         </div>
       </nav>
 
       <div class="sidebar-footer">
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="11 17 6 12 11 7"></polyline>
-            <polyline points="18 17 13 12 18 7"></polyline>
-          </svg>
-        </button>
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar">👤</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="adminName">관리자</div>
+            <div class="sidebar-user-role">Administrator</div>
+          </div>
+        </div>
+        <button class="sidebar-logout" onclick="adminLogout()">🚪 로그아웃</button>
       </div>
     </aside>
 
@@ -1001,124 +1192,79 @@
     <main class="main-content">
       <!-- Top bar -->
       <header class="topbar">
-        <h1 class="topbar-title" id="pageTitle">Overview</h1>
+        <h1 class="topbar-title" id="pageTitle">개요</h1>
         <div class="topbar-actions">
           <span class="topbar-sync">
             <span class="dot"></span>
-            Last sync: <span id="lastSync">2 min ago</span>
+            <span id="lastSync">-</span>
           </span>
-          <button class="btn btn-outline btn-sm" onclick="refreshData()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            Refresh
-          </button>
+          <button class="btn btn-outline btn-sm" onclick="refreshData()">🔄 새로고침</button>
         </div>
       </header>
 
       <!-- Content Area -->
       <div class="content-area">
-        <!-- Overview Section -->
+        <!-- 개요 섹션 -->
         <section class="section active" id="section-overview">
-          <!-- Stats Row -->
           <div class="stats-row">
             <div class="stat-card accent-blue">
-              <div class="stat-label">Total Users</div>
+              <div class="stat-label">전체 사용자</div>
               <div class="stat-value" id="statTotalUsers">-</div>
-              <div class="stat-change positive">+12 today</div>
+              <div class="stat-change">등록된 계정 수</div>
             </div>
             <div class="stat-card accent-green">
-              <div class="stat-label">Active Subscriptions</div>
+              <div class="stat-label">활성 구독</div>
               <div class="stat-value" id="statActiveSubscriptions">-</div>
-              <div class="stat-change" id="statSubscriptionRate">-% rate</div>
-            </div>
-            <div class="stat-card accent-cyan">
-              <div class="stat-label">Data Pipeline</div>
-              <div class="stat-value" id="statPipelineStatus">-</div>
-              <div class="stat-change" id="statPipelineDetail">-</div>
+              <div class="stat-change">현재 유료 사용자</div>
             </div>
             <div class="stat-card accent-yellow">
-              <div class="stat-label">System Health</div>
-              <div class="stat-value">OK</div>
-              <div class="stat-change text-success">All systems normal</div>
+              <div class="stat-label">만료 예정</div>
+              <div class="stat-value" id="statExpiringSoon">-</div>
+              <div class="stat-change">7일 이내 만료</div>
+            </div>
+            <div class="stat-card accent-red">
+              <div class="stat-label">차단된 계정</div>
+              <div class="stat-value" id="statBlocked">-</div>
+              <div class="stat-change">접근 제한 중</div>
             </div>
           </div>
 
-          <!-- Alerts Section -->
-          <div class="alerts-section">
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Attention Required</span>
-              </div>
-              <div class="card-body">
-                <div class="alert-list" id="alertList">
-                  <div class="alert-item" onclick="switchSection('pipeline-land')">
-                    <span class="alert-icon critical"></span>
-                    <span class="alert-text"><strong id="alertExpiredCount">-</strong> regions with expired TTL - need re-collection</span>
-                    <span class="alert-action">View &rarr;</span>
-                  </div>
-                  <div class="alert-item" onclick="switchSection('pipeline-land')">
-                    <span class="alert-icon warning"></span>
-                    <span class="alert-text"><strong id="alertUnmatchedCount">-</strong> pending matches - run auto-matching</span>
-                    <span class="alert-action">Start &rarr;</span>
-                  </div>
-                  <div class="alert-item" onclick="switchSection('users-members')">
-                    <span class="alert-icon info"></span>
-                    <span class="alert-text"><strong id="alertExpiringCount">-</strong> subscriptions expiring in 7 days</span>
-                    <span class="alert-action">View &rarr;</span>
-                  </div>
-                </div>
-              </div>
+          <!-- 알림 -->
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <span class="card-title">⚠️ 주의 필요</span>
+            </div>
+            <div class="card-body" id="alertsContainer">
+              <div style="color: var(--text-tertiary); text-align: center; padding: 20px;">알림 로딩 중...</div>
             </div>
           </div>
 
-          <!-- Quick Stats Grid -->
+          <!-- 파이프라인 현황 -->
           <div class="three-col-grid">
             <div class="panel">
               <div class="panel-header">
-                <span class="panel-title">User Activity (7 days)</span>
-              </div>
-              <div class="panel-body">
-                <div style="text-align: center; padding: 40px 0; color: var(--text-tertiary);">
-                  Chart placeholder
-                </div>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Land Pipeline</span>
-                <span class="badge badge-warning" id="landMatchRate">-% matched</span>
+                <span class="panel-title">🏞️ 토지 파이프라인</span>
+                <span class="badge badge-warning" id="landMatchRate">- 완료</span>
               </div>
               <div class="panel-body">
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-primary);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Collected</div>
-                  </div>
-                  <span class="list-item-value" id="landCollected">-</span>
-                </div>
-                <div class="list-item">
-                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Pending</div>
-                  </div>
-                  <span class="list-item-value" id="landPending">-</span>
+                  <div class="list-item-content"><div class="list-item-title">전체</div></div>
+                  <span class="list-item-value" id="landTotal">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-success);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Completed</div>
-                  </div>
-                  <span class="list-item-value" id="landCompleted">-</span>
+                  <div class="list-item-content"><div class="list-item-title">매칭 완료</div></div>
+                  <span class="list-item-value" id="landMatched">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
+                  <div class="list-item-content"><div class="list-item-title">미처리</div></div>
+                  <span class="list-item-value" id="landPending">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-danger);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Failed</div>
-                  </div>
+                  <div class="list-item-content"><div class="list-item-title">실패</div></div>
                   <span class="list-item-value" id="landFailed">-</span>
                 </div>
               </div>
@@ -1126,1071 +1272,907 @@
 
             <div class="panel">
               <div class="panel-header">
-                <span class="panel-title">Commercial Pipeline</span>
-                <span class="badge badge-success" id="commercialMatchRate">-% matched</span>
+                <span class="panel-title">🏢 상가 파이프라인</span>
+                <span class="badge badge-success" id="commercialMatchRate">- 완료</span>
               </div>
               <div class="panel-body">
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-primary);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Collected</div>
-                  </div>
-                  <span class="list-item-value" id="commercialCollected">-</span>
-                </div>
-                <div class="list-item">
-                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Pending</div>
-                  </div>
-                  <span class="list-item-value" id="commercialPending">-</span>
+                  <div class="list-item-content"><div class="list-item-title">전체</div></div>
+                  <span class="list-item-value" id="commercialTotal">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-success);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Completed</div>
-                  </div>
-                  <span class="list-item-value" id="commercialCompleted">-</span>
+                  <div class="list-item-content"><div class="list-item-title">매칭 완료</div></div>
+                  <span class="list-item-value" id="commercialMatched">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
+                  <div class="list-item-content"><div class="list-item-title">미처리</div></div>
+                  <span class="list-item-value" id="commercialPending">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-info);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Not Masked</div>
-                  </div>
+                  <div class="list-item-content"><div class="list-item-title">마스킹 없음</div></div>
                   <span class="list-item-value" id="commercialNotMasked">-</span>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        <!-- Pipeline Land Section -->
-        <section class="section" id="section-pipeline-land">
-          <!-- Pipeline Tabs -->
-          <div class="pipeline-header">
-            <div class="pipeline-tabs">
-              <button class="pipeline-tab active" onclick="switchPipelineType('land')">Land</button>
-              <button class="pipeline-tab" onclick="switchPipelineType('commercial')">Commercial</button>
-            </div>
-            <button class="btn btn-success" id="btnStartMatching" onclick="startAutoMatching()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              Start Auto-Matching
-            </button>
-          </div>
-
-          <!-- Pipeline Flow -->
-          <div class="pipeline-flow">
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon collected">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Collected</div>
-              <div class="pipeline-stage-value" id="pipelineLandCollected">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill blue" style="width: 100%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon pending">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Pending</div>
-              <div class="pipeline-stage-value" id="pipelineLandPending">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill yellow" id="pipelineLandPendingBar" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon completed">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Completed</div>
-              <div class="pipeline-stage-value" id="pipelineLandCompleted">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill green" id="pipelineLandCompletedBar" style="width: 25%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon failed">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Failed</div>
-              <div class="pipeline-stage-value" id="pipelineLandFailed">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill red" id="pipelineLandFailedBar" style="width: 25%;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Progress Section -->
-          <div class="progress-section">
-            <div class="progress-header">
-              <span class="progress-label">Match Rate</span>
-              <span class="progress-value" id="pipelineLandRate">--%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar-fill" id="pipelineLandRateBar" style="width: 0%;"></div>
-            </div>
-            <div class="progress-target">Target: 80%</div>
-          </div>
-
-          <!-- Auto-matching progress (hidden by default) -->
-          <div class="progress-section hidden" id="matchingProgress">
-            <div class="progress-header">
-              <span class="progress-label" id="matchingStatus">Processing batch #1...</span>
-              <span class="progress-value" id="matchingPercent">0%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar-fill" id="matchingBar" style="width: 0%;"></div>
-            </div>
-            <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px;">
-              <span>Success: <strong class="text-success" id="matchingSuccess">0</strong></span>
-              <span>Ambiguous: <strong class="text-warning" id="matchingAmbiguous">0</strong></span>
-              <span>Failed: <strong class="text-danger" id="matchingFailed">0</strong></span>
-            </div>
-          </div>
-
-          <!-- Three Column Grid -->
-          <div class="three-col-grid">
-            <!-- Collection Status -->
             <div class="panel">
               <div class="panel-header">
-                <span class="panel-title">Collection Status</span>
-                <button class="btn btn-outline btn-sm" onclick="refreshCollectionStatus()">Refresh</button>
+                <span class="panel-title">📥 수집 현황</span>
               </div>
               <div class="panel-body">
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-success);"></span>
                   <div class="list-item-content">
-                    <div class="list-item-title">TTL Valid</div>
-                    <div class="list-item-subtitle">Within 60 days</div>
+                    <div class="list-item-title">TTL 유효</div>
+                    <div class="list-item-subtitle">60일 이내 수집</div>
                   </div>
-                  <span class="list-item-value" id="collectionValidLand">-</span>
+                  <span class="list-item-value" id="collectionValid">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--accent-danger);"></span>
                   <div class="list-item-content">
-                    <div class="list-item-title">TTL Expired</div>
-                    <div class="list-item-subtitle">Need re-collection</div>
+                    <div class="list-item-title">TTL 만료</div>
+                    <div class="list-item-subtitle">재수집 필요</div>
                   </div>
-                  <span class="list-item-value" id="collectionExpiredLand">-</span>
+                  <span class="list-item-value" id="collectionExpired">-</span>
                 </div>
                 <div class="list-item">
                   <span class="list-item-icon" style="background: var(--text-tertiary);"></span>
                   <div class="list-item-content">
-                    <div class="list-item-title">Empty Regions</div>
-                    <div class="list-item-subtitle">No transactions</div>
+                    <div class="list-item-title">0건 지역</div>
+                    <div class="list-item-subtitle">거래 없음</div>
                   </div>
-                  <span class="list-item-value" id="collectionEmptyLand">-</span>
-                </div>
-                <!-- Expired regions list -->
-                <div class="mt-4" id="expiredRegionsList" style="max-height: 150px; overflow-y: auto;">
-                </div>
-              </div>
-            </div>
-
-            <!-- Matching Engine -->
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Matching Engine</span>
-              </div>
-              <div class="panel-body">
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Normal Match</div>
-                  </div>
-                  <span class="list-item-value" id="matchNormal">-</span>
-                </div>
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Share Sale</div>
-                  </div>
-                  <span class="list-item-value" id="matchShare">-</span>
-                </div>
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Bulk Sale</div>
-                  </div>
-                  <span class="list-item-value" id="matchBulk">-</span>
-                </div>
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Ambiguous</div>
-                  </div>
-                  <span class="list-item-value text-warning" id="matchAmbiguous">-</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Failure Analysis -->
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Failure Analysis</span>
-              </div>
-              <div class="panel-body">
-                <div class="bar-chart">
-                  <div class="bar-chart-item">
-                    <span class="bar-chart-label">No Match</span>
-                    <div class="bar-chart-bar">
-                      <div class="bar-chart-fill danger" id="failNoMatchBar" style="width: 0%;"></div>
-                    </div>
-                    <span class="bar-chart-value" id="failNoMatch">-</span>
-                  </div>
-                  <div class="bar-chart-item">
-                    <span class="bar-chart-label">No LdCode</span>
-                    <div class="bar-chart-bar">
-                      <div class="bar-chart-fill warning" id="failNoLdcodeBar" style="width: 0%;"></div>
-                    </div>
-                    <span class="bar-chart-value" id="failNoLdcode">-</span>
-                  </div>
-                </div>
-                <div class="insight-box">
-                  <div class="insight-box-title">Insight</div>
-                  <div class="insight-box-content" id="failureInsight">
-                    Loading analysis...
-                  </div>
+                  <span class="list-item-value" id="collectionEmpty">-</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Pipeline Commercial Section -->
-        <section class="section" id="section-pipeline-commercial">
-          <div class="pipeline-header">
-            <div class="pipeline-tabs">
-              <button class="pipeline-tab" onclick="switchPipelineType('land')">Land</button>
-              <button class="pipeline-tab active" onclick="switchPipelineType('commercial')">Commercial</button>
-            </div>
-            <button class="btn btn-success" id="btnStartCommercialMatching" onclick="startCommercialMatching()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              Start Auto-Matching
-            </button>
-          </div>
-
-          <!-- Pipeline Flow -->
-          <div class="pipeline-flow">
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon collected">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Collected</div>
-              <div class="pipeline-stage-value" id="pipelineCommercialCollected">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill blue" style="width: 100%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon pending">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Pending</div>
-              <div class="pipeline-stage-value" id="pipelineCommercialPending">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill yellow" id="pipelineCommercialPendingBar" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon completed">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Completed</div>
-              <div class="pipeline-stage-value" id="pipelineCommercialCompleted">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill green" id="pipelineCommercialCompletedBar" style="width: 25%;"></div>
-              </div>
-            </div>
-
-            <div class="pipeline-stage">
-              <div class="pipeline-stage-icon" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-info);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                </svg>
-              </div>
-              <div class="pipeline-stage-label">Not Masked</div>
-              <div class="pipeline-stage-value" id="pipelineCommercialNotMasked">-</div>
-              <div class="pipeline-stage-bar">
-                <div class="pipeline-stage-bar-fill" style="background: var(--accent-info);" id="pipelineCommercialNotMaskedBar" style="width: 10%;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Progress Section -->
-          <div class="progress-section">
-            <div class="progress-header">
-              <span class="progress-label">Match Rate (Masked Only)</span>
-              <span class="progress-value" id="pipelineCommercialRate">--%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar-fill" id="pipelineCommercialRateBar" style="width: 0%;"></div>
-            </div>
-            <div class="progress-target">Target: 80%</div>
-          </div>
-
-          <!-- Auto-matching progress (hidden by default) -->
-          <div class="progress-section hidden" id="commercialMatchingProgress">
-            <div class="progress-header">
-              <span class="progress-label" id="commercialMatchingStatus">Processing batch #1...</span>
-              <span class="progress-value" id="commercialMatchingPercent">0%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar-fill" id="commercialMatchingBar" style="width: 0%;"></div>
-            </div>
-            <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px;">
-              <span>Success: <strong class="text-success" id="commercialMatchingSuccess">0</strong></span>
-              <span>Ambiguous: <strong class="text-warning" id="commercialMatchingAmbiguous">0</strong></span>
-              <span>Failed: <strong class="text-danger" id="commercialMatchingFailed">0</strong></span>
-            </div>
-          </div>
-
-          <!-- Three Column Grid -->
-          <div class="three-col-grid">
-            <!-- Collection Status -->
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Collection Status</span>
-              </div>
-              <div class="panel-body">
-                <div class="list-item">
-                  <span class="list-item-icon" style="background: var(--accent-success);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">TTL Valid</div>
-                  </div>
-                  <span class="list-item-value" id="collectionValidCommercial">-</span>
-                </div>
-                <div class="list-item">
-                  <span class="list-item-icon" style="background: var(--accent-danger);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">TTL Expired</div>
-                  </div>
-                  <span class="list-item-value" id="collectionExpiredCommercial">-</span>
-                </div>
-                <div class="list-item">
-                  <span class="list-item-icon" style="background: var(--text-tertiary);"></span>
-                  <div class="list-item-content">
-                    <div class="list-item-title">Empty Regions</div>
-                  </div>
-                  <span class="list-item-value" id="collectionEmptyCommercial">-</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Matching Stats -->
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Matching Stats</span>
-              </div>
-              <div class="panel-body">
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Masked (Target)</div>
-                  </div>
-                  <span class="list-item-value" id="commercialMasked">-</span>
-                </div>
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Not Masked (Skip)</div>
-                  </div>
-                  <span class="list-item-value text-info" id="commercialNotMaskedStat">-</span>
-                </div>
-                <div class="list-item">
-                  <div class="list-item-content">
-                    <div class="list-item-title">Ambiguous</div>
-                  </div>
-                  <span class="list-item-value text-warning" id="commercialAmbiguous">-</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Info -->
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Info</span>
-              </div>
-              <div class="panel-body">
-                <div class="insight-box" style="margin-top: 0;">
-                  <div class="insight-box-title">Note</div>
-                  <div class="insight-box-content">
-                    Commercial transactions without masked addresses (floor/unit visible) are skipped during matching as they don't need PNU resolution.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Users Section -->
+        <!-- 회원 관리 섹션 -->
         <section class="section" id="section-users">
-          <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="사용자 검색 (아이디, 닉네임, 이메일)">
+            <button class="btn btn-primary" onclick="searchUsers()">🔍 검색</button>
+            <button class="btn btn-outline" onclick="refreshData()">🔄 새로고침</button>
+          </div>
+
+          <div class="filters">
+            <button class="filter-btn active" onclick="setSubscriptionFilter('all')">📊 전체</button>
+            <button class="filter-btn" onclick="setSubscriptionFilter('active')">✅ 활성 구독</button>
+            <button class="filter-btn" onclick="setSubscriptionFilter('expired')">⏰ 만료/취소</button>
+            <button class="filter-btn" onclick="setSubscriptionFilter('none')">📭 구독 없음</button>
+          </div>
+
+          <div class="error-box" id="errorBox"></div>
+          <div class="success-box" id="successBox"></div>
+
+          <div class="loading" id="loading">로딩 중...</div>
+
+          <div class="card">
+            <div class="card-body" style="padding: 0;">
+              <div id="usersTableContainer"></div>
+            </div>
+          </div>
+
+          <div class="pagination" id="pagination" style="display: none;">
+            <button onclick="previousPage()">◀ 이전</button>
+            <span class="page-info">
+              <span id="currentPage">1</span> / <span id="totalPages">1</span>
+            </span>
+            <button onclick="nextPage()">다음 ▶</button>
+          </div>
+        </section>
+
+        <!-- 탈퇴 회원 섹션 -->
+        <section class="section" id="section-deleted">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">탈퇴 회원</span>
+            </div>
+            <div class="card-body" id="deletedUsersContent">
+              <div class="empty-state">
+                <div class="icon">📭</div>
+                <div class="message">탈퇴한 회원이 없습니다</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 그룹 관리 섹션 -->
+        <section class="section" id="section-groups">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 16px; font-weight: 600;">그룹 관리</h3>
+            <button class="btn btn-primary" onclick="showAddGroupModal()">➕ 그룹 추가</button>
+          </div>
+          <div id="groupsContent"></div>
+        </section>
+
+        <!-- 수집 현황 섹션 -->
+        <section class="section" id="section-molit-status">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 16px; font-weight: 600;">📊 실거래가 수집 현황</h3>
+            <button class="btn btn-outline" onclick="loadMolitStatus()">🔄 새로고침</button>
+          </div>
+
+          <div class="stats-row" style="margin-bottom: 24px;">
             <div class="stat-card accent-blue">
-              <div class="stat-label">Total Users</div>
-              <div class="stat-value" id="userStatTotal">-</div>
+              <div class="stat-label">수집된 지역</div>
+              <div class="stat-value" id="molitStatRegions" style="font-size: 28px;">-</div>
+              <div class="stat-change">/ 전국 280개 시군구</div>
             </div>
             <div class="stat-card accent-green">
-              <div class="stat-label">Active Subscriptions</div>
-              <div class="stat-value" id="userStatActive">-</div>
+              <div class="stat-label">✅ TTL 유효</div>
+              <div class="stat-value" id="molitStatValid" style="font-size: 28px;">-</div>
+              <div class="stat-change">60일 이내 수집</div>
             </div>
             <div class="stat-card accent-yellow">
-              <div class="stat-label">Expiring Soon (7d)</div>
-              <div class="stat-value" id="userStatExpiring">-</div>
+              <div class="stat-label">⏰ TTL 만료</div>
+              <div class="stat-value" id="molitStatExpired" style="font-size: 28px;">-</div>
+              <div class="stat-change">재수집 필요</div>
+            </div>
+            <div class="stat-card accent-purple">
+              <div class="stat-label">📭 0건 지역</div>
+              <div class="stat-value" id="molitStatEmpty" style="font-size: 28px;">-</div>
+              <div class="stat-change">거래 없음</div>
             </div>
           </div>
+
+          <div class="filters">
+            <button class="filter-btn active" onclick="setMolitStatusFilter('all')">📊 전체</button>
+            <button class="filter-btn" onclick="setMolitStatusFilter('valid')">✅ TTL 유효</button>
+            <button class="filter-btn" onclick="setMolitStatusFilter('expired')">⏰ TTL 만료</button>
+            <button class="filter-btn" onclick="setMolitStatusFilter('empty')">📭 0건 지역</button>
+          </div>
+
           <div class="card">
-            <div class="card-body" style="text-align: center; padding: 60px;">
-              <div style="color: var(--text-tertiary); margin-bottom: 16px;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5;">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
+            <div class="card-body" style="padding: 0;" id="molitStatusContent">
+              <div class="empty-state">
+                <div class="icon">📊</div>
+                <div class="message">수집 현황을 불러오는 중...</div>
               </div>
-              <div style="color: var(--text-secondary); margin-bottom: 20px;">
-                User management features are available in the classic admin panel
-              </div>
-              <a href="index.html" class="btn btn-primary">
-                Open Classic Admin Panel
-              </a>
             </div>
           </div>
         </section>
 
-        <section class="section" id="section-users-members">
-          <div class="card">
-            <div class="card-body" style="text-align: center; padding: 60px;">
-              <div style="color: var(--text-secondary); margin-bottom: 20px;">
-                Member management is available in the classic admin panel
+        <!-- PNU 매칭 섹션 -->
+        <section class="section" id="section-pnu-matcher">
+          <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-subtab="land" onclick="switchPnuSubTab('land')">🏞️ 토지</button>
+            <button class="sub-tab-btn" data-subtab="commercial" onclick="switchPnuSubTab('commercial')">🏢 상가</button>
+          </div>
+
+          <!-- 토지 서브탭 -->
+          <div class="subtab-content active" id="pnu-subtab-land">
+            <!-- 자동 매칭 컨트롤 -->
+            <div class="progress-section" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(6, 182, 212, 0.1)); border-color: var(--accent-success);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 15px; font-weight: 600; color: var(--accent-success);">🏞️ 토지 PNU 자동 매칭</h3>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-success" onclick="runPnuQuickMatch()" id="btnRunPnuQuick">▶ 자동 매칭 시작</button>
+                  <button class="btn btn-outline btn-sm" onclick="loadPnuStats()">🔄</button>
+                </div>
               </div>
-              <a href="index.html" class="btn btn-primary">
-                Open Classic Admin Panel
-              </a>
+
+              <!-- 진행 상태 -->
+              <div id="pnuProgressSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span id="pnuProgressStatus" style="font-size: 13px; color: var(--text-secondary);">대기 중...</span>
+                  <span id="pnuProgressPercent" style="font-size: 14px; font-weight: 600; color: var(--accent-primary);">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill" id="pnuProgressBar" style="width: 0%;"></div>
+                </div>
+                <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px;">
+                  <span>✅ 성공: <strong class="text-success" id="pnuProgressMatched">0</strong></span>
+                  <span>⚠️ 중복: <strong class="text-warning" id="pnuProgressAmbiguous">0</strong></span>
+                  <span>❌ 실패: <strong class="text-danger" id="pnuProgressFailed">0</strong></span>
+                  <span style="margin-left: auto; color: var(--text-tertiary);">배치 #<span id="pnuProgressBatch">0</span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="stats-row">
+              <div class="stat-card accent-blue">
+                <div class="stat-label">전체 거래</div>
+                <div class="stat-value" id="pnuStatTotal">-</div>
+              </div>
+              <div class="stat-card accent-green">
+                <div class="stat-label">✅ 매칭 완료</div>
+                <div class="stat-value" id="pnuStatMatched">-</div>
+                <div class="stat-change" style="font-size: 10px;">
+                  일반 <span id="pnuStatMatchedNormal">-</span> · 지분 <span id="pnuStatShareSale">-</span> · 일괄 <span id="pnuStatBulkSale">-</span>
+                </div>
+              </div>
+              <div class="stat-card accent-cyan">
+                <div class="stat-label">⏳ 미처리</div>
+                <div class="stat-value" id="pnuStatUnmatched">-</div>
+              </div>
+              <div class="stat-card accent-purple">
+                <div class="stat-label">📊 매칭률</div>
+                <div class="stat-value" id="pnuMatchRate">--%</div>
+                <div style="height: 4px; background: var(--bg-tertiary); border-radius: 2px; margin-top: 8px;">
+                  <div id="pnuMatchRateBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-success)); border-radius: 2px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 실패 통계 -->
+            <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="stat-card accent-yellow">
+                <div class="stat-label">⚠️ 중복 후보</div>
+                <div class="stat-value" id="pnuStatAmbiguous">-</div>
+                <div class="stat-change">수동 검토 필요</div>
+              </div>
+              <div class="stat-card" style="border-left: 3px solid #f97316;">
+                <div class="stat-label">🔍 법정동 미확인</div>
+                <div class="stat-value" id="pnuStatFailLdcode">-</div>
+                <div class="stat-change">bjd_code 누락</div>
+              </div>
+              <div class="stat-card accent-red">
+                <div class="stat-label">❌ 조건 불일치</div>
+                <div class="stat-value" id="pnuStatFailNoMatch">-</div>
+                <div class="stat-change">지번/지목/면적 불일치</div>
+              </div>
+            </div>
+
+            <!-- 고급 옵션 -->
+            <details style="margin-bottom: 24px;">
+              <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; font-weight: 500; color: var(--text-secondary);">⚙️ 고급 옵션</summary>
+              <div style="margin-top: 12px; padding: 16px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>시군구 코드</label>
+                    <input type="text" id="pnuLawdCd" placeholder="예: 41630" style="width: 100px; font-size: 12px;">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>거래 연도</label>
+                    <input type="number" id="pnuDealYear" placeholder="예: 2024" style="width: 80px; font-size: 12px;">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>배치 크기</label>
+                    <input type="number" id="pnuLimit" value="100" min="1" max="500" style="width: 60px; font-size: 12px;">
+                  </div>
+                  <button class="btn btn-primary btn-sm" onclick="runPnuBatchMatch()" id="btnRunPnuMatch">▶ 단일 배치 실행</button>
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 12px;">
+                  <input type="checkbox" id="pnuDryRun">
+                  <span style="font-size: 12px; color: var(--text-secondary);">Dry Run (테스트 모드)</span>
+                </label>
+                <div style="padding-top: 12px; border-top: 1px solid var(--border);">
+                  <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">기록 초기화:</span>
+                  <button class="action-btn" style="font-size: 10px;" onclick="clearMatchingRecords('clear_failures')">🗑️ 실패</button>
+                  <button class="action-btn" style="font-size: 10px;" onclick="clearMatchingRecords('clear_ambiguous')">🗑️ 중복</button>
+                  <button class="action-btn" style="font-size: 10px;" onclick="clearMatchingRecords('clear_all')">🗑️ 전체</button>
+                </div>
+              </div>
+            </details>
+
+            <!-- 중복/실패 목록 -->
+            <div class="three-col-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title" style="color: var(--accent-warning);">⚠️ 중복 후보</span>
+                </div>
+                <div class="panel-body" id="pnuAmbiguousList">
+                  <p style="color: var(--text-tertiary); font-size: 12px;">데이터 없음</p>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title" style="color: var(--accent-danger);">❌ 최근 실패</span>
+                  <button class="btn btn-outline btn-sm" onclick="retryFailedMatches()">🔄 재시도</button>
+                </div>
+                <div class="panel-body" id="pnuFailedList">
+                  <p style="color: var(--text-tertiary); font-size: 12px;">데이터 없음</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 상가 서브탭 -->
+          <div class="subtab-content" id="pnu-subtab-commercial">
+            <div class="stats-row">
+              <div class="stat-card accent-blue">
+                <div class="stat-label">전체 상가 거래</div>
+                <div class="stat-value" id="commercialStatTotal">-</div>
+              </div>
+              <div class="stat-card accent-green">
+                <div class="stat-label">✅ 매칭 완료</div>
+                <div class="stat-value" id="commercialStatMatched">-</div>
+              </div>
+              <div class="stat-card accent-yellow">
+                <div class="stat-label">미처리 (마스킹)</div>
+                <div class="stat-value" id="commercialStatUnmatched">-</div>
+              </div>
+              <div class="stat-card accent-cyan">
+                <div class="stat-label">✓ 마스킹 없음</div>
+                <div class="stat-value" id="commercialStatNotMasked">-</div>
+              </div>
+            </div>
+
+            <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="stat-card accent-yellow">
+                <div class="stat-label">⚠️ 중복 후보</div>
+                <div class="stat-value" id="commercialStatAmbiguous">-</div>
+              </div>
+              <div class="stat-card accent-red">
+                <div class="stat-label">❌ 매칭 실패</div>
+                <div class="stat-value" id="commercialStatFailed">-</div>
+              </div>
+              <div class="stat-card accent-info">
+                <div class="stat-label">⚡ 자동 승인</div>
+                <div class="stat-value" id="commercialStatAutoApproved">-</div>
+              </div>
+            </div>
+
+            <!-- 매칭률 -->
+            <div class="progress-section">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 13px; color: var(--text-secondary);">매칭률</span>
+                <span id="commercialMatchRateFull" style="font-size: 14px; font-weight: 600; color: var(--accent-primary);">--%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-bar-fill" id="commercialMatchRateBar" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- 배치 컨트롤 -->
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <span class="card-title">배치 매칭 실행</span>
+              </div>
+              <div class="card-body">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>시군구 코드 (선택)</label>
+                    <input type="text" id="commercialLawdCd" placeholder="예: 41630" style="width: 120px;">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>처리 건수</label>
+                    <input type="number" id="commercialLimit" value="50" min="1" max="200" style="width: 80px;">
+                  </div>
+                  <button class="btn btn-primary" onclick="runCommercialBatchMatch()" id="btnRunCommercialMatch">▶ 배치 실행</button>
+                  <button class="btn btn-success" onclick="runCommercialQuickMatch()" id="btnRunCommercialQuick">⚡ 자동 매칭</button>
+                  <button class="btn btn-outline" onclick="loadCommercialStats()">🔄 새로고침</button>
+                </div>
+                <p style="margin-top: 12px; font-size: 11px; color: var(--text-tertiary);">
+                  💡 상가 매칭은 건축물대장 API를 사용하므로 토지보다 시간이 오래 걸립니다. (최대 200건/배치)
+                </p>
+              </div>
+            </div>
+
+            <!-- 결과 카드 -->
+            <div class="card hidden" id="commercialResultCard">
+              <div class="card-header">
+                <span class="card-title" id="commercialResultLabel">⚡ 자동 매칭</span>
+              </div>
+              <div class="card-body" id="commercialResultContent">
+                <div style="display: flex; gap: 24px; justify-content: center;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-success);" id="commercialResultMatched">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary);">성공</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-info);" id="commercialResultSkipped">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary);">건대장없음</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-danger);" id="commercialResultFailed">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary);">실패</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 목록 -->
+            <div class="three-col-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title" style="color: var(--accent-warning);">중복 후보 (수동 확인 필요)</span>
+                </div>
+                <div class="panel-body" id="commercialAmbiguousList">
+                  <p style="color: var(--text-tertiary); font-size: 12px;">데이터 없음</p>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title" style="color: var(--accent-danger);">매칭 실패</span>
+                </div>
+                <div class="panel-body" id="commercialFailedList">
+                  <p style="color: var(--text-tertiary); font-size: 12px;">데이터 없음</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section class="section" id="section-users-deleted">
-          <div class="card">
-            <div class="card-body" style="text-align: center; padding: 60px;">
-              <div style="color: var(--text-secondary); margin-bottom: 20px;">
-                Deleted user management is available in the classic admin panel
+        <!-- 조회 통계 섹션 -->
+        <section class="section" id="section-lookup-stats">
+          <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+            <label style="color: var(--text-secondary); font-size: 13px;">조회 기간:</label>
+            <select id="lookupStatsPeriod" onchange="loadLookupStats()" style="padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px;">
+              <option value="1" selected>최근 1일</option>
+              <option value="7">최근 7일</option>
+              <option value="30">최근 30일</option>
+              <option value="90">최근 90일</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadLookupStats()">🔄 새로고침</button>
+            <span id="lookupStatsLoading" style="display: none; color: var(--accent-info); font-size: 12px;">로딩 중...</span>
+          </div>
+
+          <div class="stats-row" style="grid-template-columns: 1fr;">
+            <div class="stat-card accent-blue">
+              <div class="stat-label">총 조회수</div>
+              <div class="stat-value" id="statTotalLookups">-</div>
+              <div class="stat-change">PNU + 검색어</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <span class="card-title">🏆 많이 찾는 지역 TOP 20</span>
+            </div>
+            <div class="card-body" id="popularRegionsContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
               </div>
-              <a href="index.html" class="btn btn-primary">
-                Open Classic Admin Panel
-              </a>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <span class="card-title">🔍 인기 검색어 TOP 20</span>
+            </div>
+            <div class="card-body" id="popularQueriesContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">👥 유저별 조회 현황</span>
+            </div>
+            <div class="card-body" id="userLookupStatsContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section class="section" id="section-users-groups">
-          <div class="card">
-            <div class="card-body" style="text-align: center; padding: 60px;">
-              <div style="color: var(--text-secondary); margin-bottom: 20px;">
-                Group management is available in the classic admin panel
+        <!-- 세션 통계 섹션 -->
+        <section class="section" id="section-session-stats">
+          <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+            <button class="btn btn-outline btn-sm" onclick="loadSessionStats()">🔄 새로고침</button>
+            <span id="sessionStatsLoading" style="display: none; color: var(--accent-info); font-size: 12px;">로딩 중...</span>
+          </div>
+
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <span class="card-title">📊 일별 활성 유저 (최근 30일)</span>
+            </div>
+            <div class="card-body" id="dailyActiveUsersContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
               </div>
-              <a href="index.html" class="btn btn-primary">
-                Open Classic Admin Panel
-              </a>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <span class="card-title">👥 유저별 세션 통계 (최근 30일)</span>
+            </div>
+            <div class="card-body" id="userSessionStatsContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">📱 익스텐션 버전별 사용 현황</span>
+            </div>
+            <div class="card-body" id="extensionVersionStatsContent">
+              <div class="empty-state">
+                <div class="message">데이터 로딩 중...</div>
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- Settings Section -->
+        <!-- 앱 설정 섹션 -->
         <section class="section" id="section-settings">
           <div class="card" style="max-width: 600px;">
             <div class="card-header">
-              <span class="card-title">App Configuration</span>
+              <span class="card-title">앱 설정</span>
             </div>
             <div class="card-body">
-              <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Minimum App Version</label>
-                <input type="text" id="settingMinVersion" placeholder="e.g. 1.0.0" style="width: 100%; padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 14px;">
-                <small style="display: block; margin-top: 6px; color: var(--text-tertiary); font-size: 12px;">Apps below this version will be required to update</small>
+              <div class="form-group">
+                <label>최소 지원 버전</label>
+                <input type="text" id="settingMinVersion" placeholder="예: 1.0.0">
+                <small>이 버전 미만의 앱은 업데이트를 요구합니다</small>
               </div>
 
-              <div style="margin-bottom: 20px;">
+              <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingForceUpdate" style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
-                  <span style="font-size: 14px; color: var(--text-primary);">Force Update</span>
+                  <input type="checkbox" id="settingForceUpdate" style="width: 18px; height: 18px;">
+                  <span>강제 업데이트 활성화</span>
                 </label>
-                <small style="display: block; margin-top: 6px; margin-left: 28px; color: var(--text-tertiary); font-size: 12px;">When enabled, users must update to continue using the app</small>
+                <small>활성화 시 최소 버전 미만 앱은 강제로 업데이트해야 합니다</small>
               </div>
 
-              <div style="margin-bottom: 20px; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px;">
+              <div style="margin-bottom: 16px; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingMaintenanceMode" style="width: 18px; height: 18px; accent-color: var(--accent-warning);">
-                  <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">Maintenance Mode</span>
+                  <input type="checkbox" id="settingMaintenanceMode" style="width: 18px; height: 18px;">
+                  <span style="font-weight: 500;">⚠️ 점검 모드</span>
                 </label>
-                <small style="display: block; margin-top: 6px; margin-left: 28px; color: var(--text-secondary); font-size: 12px;">Enable to temporarily block all app access</small>
+                <small style="display: block; margin-top: 8px; color: var(--text-secondary);">활성화 시 앱 접속이 제한됩니다</small>
               </div>
 
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Maintenance Message</label>
-                <textarea id="settingMaintenanceMessage" placeholder="Message shown to users during maintenance" rows="3" style="width: 100%; padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 14px; resize: vertical;"></textarea>
+              <div class="form-group">
+                <label>점검 메시지</label>
+                <textarea id="settingMaintenanceMessage" placeholder="점검 중 표시할 메시지" rows="3"></textarea>
               </div>
 
-              <button class="btn btn-primary" onclick="updateAppSettings()" style="width: 100%;">
-                Save Settings
-              </button>
+              <button class="btn btn-primary" onclick="updateAppSettings()" style="width: 100%;">💾 저장</button>
             </div>
           </div>
-        </section>
-
-        <!-- Pipeline Section (redirect) -->
-        <section class="section" id="section-pipeline">
-          <!-- Redirects to pipeline-land -->
         </section>
       </div>
     </main>
   </div>
 
+  <!-- 모달: 회원 상세 -->
+  <div class="modal" id="userModal">
+    <div class="modal-content">
+      <div class="modal-header">👁️ 회원 상세</div>
+      <div class="modal-body" id="userDetailContent"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">닫기</button>
+        <button class="action-btn primary" id="btnEditUser" onclick="openEditUserFromDetail()">✏️ 정보 수정</button>
+        <button class="action-btn danger" id="btnBlockUser" onclick="openBlockModalFromDetail()" style="display: none;">🚫 차단</button>
+        <button class="action-btn success" id="btnUnblockUser" onclick="unblockUserFromDetail()" style="display: none;">✅ 차단 해제</button>
+        <button class="action-btn danger" id="btnDeleteUser" onclick="confirmDeleteUserFromDetail()">🗑️ 탈퇴</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달: 회원 수정 -->
+  <div class="modal" id="editUserModal">
+    <div class="modal-content">
+      <div class="modal-header">사용자 정보 수정</div>
+      <form id="editUserForm">
+        <div class="modal-body">
+          <input type="hidden" id="editUserId">
+          <div class="form-group">
+            <label>아이디 (ID/PW 로그인용)</label>
+            <input type="text" id="editUsername" placeholder="아이디">
+            <small>카카오 로그인 사용자는 변경 불가</small>
+          </div>
+          <div class="form-group">
+            <label>닉네임</label>
+            <input type="text" id="editNickname" placeholder="닉네임">
+          </div>
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="editEmail" placeholder="이메일">
+          </div>
+          <div class="form-group">
+            <label>비밀번호 재설정 (ID/PW 로그인용)</label>
+            <input type="password" id="editPassword" placeholder="새 비밀번호 (변경 시에만 입력)">
+            <small>카카오 로그인 사용자는 사용 안 함</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 모달: 구독 관리 -->
+  <div class="modal" id="subscriptionManageModal">
+    <div class="modal-content wide">
+      <div class="modal-header">💳 구독 관리</div>
+      <div class="modal-body" id="subscriptionManageContent">
+        <p style="text-align: center; padding: 20px; color: var(--text-tertiary);">로딩 중...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal()">닫기</button>
+        <button type="button" class="btn btn-primary" id="btnAddSubscription" onclick="openAddSubModalFromManage()">➕ 연장/추가</button>
+        <button type="button" class="action-btn" id="btnCancelScheduled" onclick="cancelScheduledFromManage()" style="background: var(--accent-warning); display: none;">🗑️ 예약 취소</button>
+        <button type="button" class="action-btn danger" id="btnCancelAll" onclick="cancelAllFromManage()" style="display: none;">❌ 모두 취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달: 구독 추가 -->
+  <div class="modal" id="addSubModal">
+    <div class="modal-content">
+      <div class="modal-header">구독 추가</div>
+      <form id="addSubForm">
+        <div class="modal-body">
+          <input type="hidden" id="addSubUserId">
+          <div class="form-group">
+            <label>플랜</label>
+            <select id="addSubPlan">
+              <option value="free">Free</option>
+              <option value="pro" selected>Pro</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>기간 (일)</label>
+            <input type="number" id="addSubDays" value="30" min="1" max="365">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn btn-primary">추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 모달: 메모 수정 -->
+  <div class="modal" id="memoModal">
+    <div class="modal-content">
+      <div class="modal-header">메모 수정</div>
+      <form id="memoForm">
+        <div class="modal-body">
+          <input type="hidden" id="memoUserId">
+          <div class="form-group">
+            <label>관리자 메모</label>
+            <textarea id="memoText" placeholder="이 사용자에 대한 메모를 입력하세요"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 모달: 회원 차단 -->
+  <div class="modal" id="blockModal">
+    <div class="modal-content">
+      <div class="modal-header">사용자 차단</div>
+      <form id="blockForm">
+        <div class="modal-body">
+          <input type="hidden" id="blockUserId">
+          <div class="form-group">
+            <label>차단 사유</label>
+            <textarea id="blockReason" placeholder="차단 사유를 입력하세요" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn btn-danger">차단</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 모달: 로그인 기록 -->
+  <div class="modal" id="loginHistoryModal">
+    <div class="modal-content wide">
+      <div class="modal-header">로그인 기록</div>
+      <div class="modal-body" id="loginHistoryContent" style="max-height: 500px; overflow-y: auto;">
+        <div style="text-align: center; padding: 40px; color: var(--text-tertiary);">로딩 중...</div>
+      </div>
+      <div id="loginHistoryPagination" class="pagination" style="margin-top: 20px;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달: 그룹 추가 -->
+  <div class="modal" id="addGroupModal">
+    <div class="modal-content">
+      <div class="modal-header">그룹 추가</div>
+      <form id="addGroupForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>그룹 이름</label>
+            <input type="text" id="addGroupName" placeholder="그룹 이름을 입력하세요" required>
+          </div>
+          <div class="form-group">
+            <label>설명 (선택)</label>
+            <textarea id="addGroupDescription" placeholder="그룹 설명을 입력하세요"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn btn-primary">생성</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Kakao SDK -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
+  <!-- Main Admin Script -->
+  <script src="admin.js"></script>
+
+  <!-- Auth Guard -->
+  <script src="auth-guard.js"></script>
+
+  <!-- 새 섹션 네비게이션 -->
   <script>
-    // Constants
-    const SUPABASE_URL = 'https://asdqtfuvjlsgjazseekm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZHF0ZnV2amxzZ2phenNlZWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NzAwODAsImV4cCI6MjA3ODM0NjA4MH0.wLnBozm_DHUQpM68PZXXJ_02u_tW3t5KVcupove926U';
+    // 섹션 타이틀
+    const sectionTitles = {
+      'overview': '개요',
+      'users': '회원 관리',
+      'deleted': '탈퇴 회원',
+      'groups': '그룹 관리',
+      'molit-status': '수집 현황',
+      'pnu-matcher': 'PNU 매칭',
+      'lookup-stats': '조회 통계',
+      'session-stats': '세션 통계',
+      'settings': '앱 설정'
+    };
 
-    // State
-    let currentSection = 'overview';
-    let isMatchingRunning = false;
-    let molitStatusData = [];
-    let adminToken = localStorage.getItem('admin_token');
-
-    // Navigation
-    function switchSection(sectionId) {
-      // Handle redirects
-      if (sectionId === 'pipeline') sectionId = 'pipeline-land';
-
-      // Update nav items
+    // 섹션 전환
+    function switchSection(section) {
+      // 네비게이션 아이템 업데이트
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
-        if (item.dataset.section === sectionId) {
+        if (item.dataset.tab === section) {
           item.classList.add('active');
         }
       });
 
-      // Update sections
-      document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
+      // 섹션 표시
+      document.querySelectorAll('.section').forEach(s => {
+        s.classList.remove('active');
       });
 
-      const targetSection = document.getElementById('section-' + sectionId);
+      const targetSection = document.getElementById('section-' + section);
       if (targetSection) {
         targetSection.classList.add('active');
       }
 
-      // Update title
-      const titles = {
-        'overview': 'Overview',
-        'users': 'Users',
-        'users-members': 'Members',
-        'users-deleted': 'Deleted Users',
-        'users-groups': 'Groups',
-        'pipeline': 'Data Pipeline',
-        'pipeline-land': 'Land Pipeline',
-        'pipeline-commercial': 'Commercial Pipeline',
-        'settings': 'Settings'
-      };
-      document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
+      // 타이틀 업데이트
+      document.getElementById('pageTitle').textContent = sectionTitles[section] || '대시보드';
 
-      currentSection = sectionId;
-
-      // Load section data
-      loadSectionData(sectionId);
-    }
-
-    function switchPipelineType(type) {
-      switchSection('pipeline-' + type);
-    }
-
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-    }
-
-    // Data Loading
-    async function loadSectionData(sectionId) {
-      switch(sectionId) {
-        case 'overview':
-          await loadOverviewData();
-          break;
-        case 'pipeline-land':
-          await loadLandPipelineData();
-          break;
-        case 'pipeline-commercial':
-          await loadCommercialPipelineData();
-          break;
-        case 'settings':
-          await loadSettingsData();
-          break;
-        case 'users':
-        case 'users-members':
-        case 'users-deleted':
-        case 'users-groups':
-          await loadUsersStats();
-          break;
+      // admin.js의 switchTab 호출
+      if (typeof switchTab === 'function') {
+        switchTab(section);
       }
     }
 
-    async function loadUsersStats() {
-      try {
-        const result = await callAdminAPI('get_stats');
-        if (result.stats) {
-          const s = result.stats;
-          document.getElementById('userStatTotal').textContent = formatNumber(s.totalUsers);
-          document.getElementById('userStatActive').textContent = formatNumber(s.activeSubscriptions);
-          document.getElementById('userStatExpiring').textContent = formatNumber(s.expiringSoon);
-        }
-      } catch (error) {
-        console.error('Failed to load user stats:', error);
+    // PNU 서브탭 전환
+    function switchPnuSubTab(subtab) {
+      document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.subtab === subtab);
+      });
+
+      document.querySelectorAll('.subtab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      document.getElementById('pnu-subtab-' + subtab).classList.add('active');
+
+      // 데이터 로드
+      if (subtab === 'land') {
+        if (typeof loadPnuStats === 'function') loadPnuStats();
+      } else if (subtab === 'commercial') {
+        if (typeof loadCommercialStats === 'function') loadCommercialStats();
       }
     }
 
+    // 개요 데이터 로드
     async function loadOverviewData() {
       try {
-        // Load user stats
-        const adminResult = await callAdminAPI('get_stats');
-        if (adminResult.stats) {
-          const s = adminResult.stats;
-          document.getElementById('statTotalUsers').textContent = formatNumber(s.totalUsers);
-          document.getElementById('statActiveSubscriptions').textContent = formatNumber(s.activeSubscriptions);
-          const subRate = s.totalUsers > 0 ? Math.round(s.activeSubscriptions / s.totalUsers * 100) : 0;
-          document.getElementById('statSubscriptionRate').textContent = subRate + '% rate';
-          document.getElementById('alertExpiringCount').textContent = formatNumber(s.expiringSoon);
+        // 사용자 통계
+        if (typeof callAdminAPI === 'function') {
+          const result = await callAdminAPI('get_stats');
+          if (result.stats) {
+            const s = result.stats;
+            document.getElementById('statTotalUsers').textContent = formatNumber(s.totalUsers);
+            document.getElementById('statActiveSubscriptions').textContent = formatNumber(s.activeSubscriptions);
+            document.getElementById('statExpiringSoon').textContent = formatNumber(s.expiringSoon);
+            document.getElementById('statBlocked').textContent = formatNumber(s.blockedUsers || 0);
+          }
         }
 
-        // Load molit collection status
-        const molitResult = await callAdminAPI('get_molit_status');
-        if (molitResult.regions) {
-          molitStatusData = molitResult.regions;
-          const now = new Date();
-          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-          const expiredCount = molitStatusData.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
-          document.getElementById('alertExpiredCount').textContent = formatNumber(expiredCount);
-          document.getElementById('collectionValid').textContent = formatNumber(molitStatusData.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
-          document.getElementById('collectionExpired').textContent = formatNumber(expiredCount);
-          document.getElementById('collectionEmpty').textContent = formatNumber(molitStatusData.filter(r => r.total_records === 0).length);
-        }
-
-        // Load land stats
+        // 토지 파이프라인 통계
         const landResult = await callLandMatcherAPI('get_status');
         if (landResult.stats) {
           const s = landResult.stats;
-          document.getElementById('landCollected').textContent = formatNumber(s.total_land_transactions);
+          document.getElementById('landTotal').textContent = formatNumber(s.total_land_transactions);
+          document.getElementById('landMatched').textContent = formatNumber(s.matched_count);
           document.getElementById('landPending').textContent = formatNumber(s.unmatched_count);
-          document.getElementById('landCompleted').textContent = formatNumber(s.matched_count);
           document.getElementById('landFailed').textContent = formatNumber(s.failed_count);
-
-          const matchRateClass = s.match_rate >= 50 ? 'badge-success' : s.match_rate >= 30 ? 'badge-warning' : 'badge-danger';
-          const landMatchBadge = document.getElementById('landMatchRate');
-          landMatchBadge.textContent = s.match_rate + '% matched';
-          landMatchBadge.className = 'badge ' + matchRateClass;
-
-          document.getElementById('alertUnmatchedCount').textContent = formatNumber(s.unmatched_count);
-          document.getElementById('statPipelineStatus').textContent = s.match_rate + '%';
-          document.getElementById('statPipelineDetail').textContent = 'Land match rate';
+          document.getElementById('landMatchRate').textContent = s.match_rate + '% 완료';
         }
 
-        // Load commercial stats
+        // 상가 파이프라인 통계
         const commercialResult = await callCommercialMatcherAPI('status');
         if (commercialResult.status) {
           const s = commercialResult.status;
-          document.getElementById('commercialCollected').textContent = formatNumber(s.total_commercial_transactions);
+          document.getElementById('commercialTotal').textContent = formatNumber(s.total_commercial_transactions);
+          document.getElementById('commercialMatched').textContent = formatNumber(s.matched_count);
           document.getElementById('commercialPending').textContent = formatNumber(s.unmatched_count);
-          document.getElementById('commercialCompleted').textContent = formatNumber(s.matched_count);
-          document.getElementById('commercialNotMasked').textContent = formatNumber(s.not_masked_count);
-
-          const matchRateClass = s.match_rate >= 50 ? 'badge-success' : s.match_rate >= 30 ? 'badge-warning' : 'badge-danger';
-          const commMatchBadge = document.getElementById('commercialMatchRate');
-          commMatchBadge.textContent = s.match_rate + '% matched';
-          commMatchBadge.className = 'badge ' + matchRateClass;
+          document.getElementById('commercialNotMasked').textContent = formatNumber(s.not_masked_count || 0);
+          document.getElementById('commercialMatchRate').textContent = s.match_rate + '% 완료';
         }
 
-        // Update alert badge count
-        updateAlertBadge();
+        // 수집 현황
+        const molitResult = await callAdminAPI('get_molit_status');
+        if (molitResult.regions) {
+          const regions = molitResult.regions;
+          const now = new Date();
+          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+          const validCount = regions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length;
+          const expiredCount = regions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
+          const emptyCount = regions.filter(r => r.total_records === 0).length;
+
+          document.getElementById('collectionValid').textContent = formatNumber(validCount);
+          document.getElementById('collectionExpired').textContent = formatNumber(expiredCount);
+          document.getElementById('collectionEmpty').textContent = formatNumber(emptyCount);
+
+          // 알림 업데이트
+          updateAlerts(expiredCount, landResult.stats?.unmatched_count || 0);
+        }
 
       } catch (error) {
-        console.error('Failed to load overview data:', error);
+        console.error('개요 데이터 로드 실패:', error);
       }
     }
 
-    function updateAlertBadge() {
-      // Count visible alerts (simplified)
-      let alertCount = 0;
-      const alerts = document.querySelectorAll('#alertList .alert-item');
-      alerts.forEach(alert => {
-        const countEl = alert.querySelector('strong');
-        if (countEl && countEl.textContent !== '-' && countEl.textContent !== '0') {
-          alertCount++;
-        }
-      });
+    function updateAlerts(expiredCount, unmatchedCount) {
+      const container = document.getElementById('alertsContainer');
+      let html = '';
+
+      if (expiredCount > 0) {
+        html += `
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-bottom: 8px; cursor: pointer;" onclick="switchSection('molit-status')">
+            <span style="width: 8px; height: 8px; background: var(--accent-danger); border-radius: 50%;"></span>
+            <span style="flex: 1; font-size: 13px;"><strong>${formatNumber(expiredCount)}</strong>개 지역 TTL 만료 - 재수집 필요</span>
+            <span style="font-size: 12px; color: var(--accent-primary);">보기 →</span>
+          </div>
+        `;
+      }
+
+      if (unmatchedCount > 0) {
+        html += `
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; margin-bottom: 8px; cursor: pointer;" onclick="switchSection('pnu-matcher')">
+            <span style="width: 8px; height: 8px; background: var(--accent-warning); border-radius: 50%;"></span>
+            <span style="flex: 1; font-size: 13px;"><strong>${formatNumber(unmatchedCount)}</strong>건 토지 매칭 대기 - 자동 매칭 권장</span>
+            <span style="font-size: 12px; color: var(--accent-primary);">시작 →</span>
+          </div>
+        `;
+      }
+
+      if (!html) {
+        html = '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">✅ 알림 없음 - 모든 시스템 정상</div>';
+      }
+
+      container.innerHTML = html;
+
+      // 배지 업데이트
+      const alertCount = (expiredCount > 0 ? 1 : 0) + (unmatchedCount > 0 ? 1 : 0);
       const badge = document.getElementById('alertBadge');
       badge.textContent = alertCount;
       badge.style.display = alertCount > 0 ? '' : 'none';
     }
 
-    async function loadLandPipelineData() {
-      try {
-        // Load molit collection status for land
-        const molitResult = await callAdminAPI('get_molit_status');
-        if (molitResult.regions) {
-          molitStatusData = molitResult.regions;
-          const landRegions = molitStatusData.filter(r => r.transaction_type === 'land');
-          const now = new Date();
-          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-          const validCount = landRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length;
-          const expiredCount = landRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
-          const emptyCount = landRegions.filter(r => r.total_records === 0).length;
-
-          document.getElementById('collectionValidLand').textContent = formatNumber(validCount);
-          document.getElementById('collectionExpiredLand').textContent = formatNumber(expiredCount);
-          document.getElementById('collectionEmptyLand').textContent = formatNumber(emptyCount);
-
-          // Render expired regions list
-          renderExpiredRegionsList(landRegions, ttlCutoff);
-        }
-
-        const result = await callLandMatcherAPI('get_status');
-        if (result.stats) {
-          const s = result.stats;
-          const total = s.total_land_transactions || 1;
-
-          // Pipeline stages
-          document.getElementById('pipelineLandCollected').textContent = formatNumber(s.total_land_transactions);
-          document.getElementById('pipelineLandPending').textContent = formatNumber(s.unmatched_count);
-          document.getElementById('pipelineLandCompleted').textContent = formatNumber(s.matched_count);
-          document.getElementById('pipelineLandFailed').textContent = formatNumber(s.failed_count);
-
-          // Progress bars
-          document.getElementById('pipelineLandPendingBar').style.width = (s.unmatched_count / total * 100) + '%';
-          document.getElementById('pipelineLandCompletedBar').style.width = (s.matched_count / total * 100) + '%';
-          document.getElementById('pipelineLandFailedBar').style.width = (s.failed_count / total * 100) + '%';
-
-          // Match rate
-          document.getElementById('pipelineLandRate').textContent = s.match_rate + '%';
-          document.getElementById('pipelineLandRateBar').style.width = s.match_rate + '%';
-
-          // Matching details
-          const normalMatch = s.matched_count - (s.share_sale_count || 0) - (s.bulk_sale_count || 0);
-          document.getElementById('matchNormal').textContent = formatNumber(normalMatch);
-          document.getElementById('matchShare').textContent = formatNumber(s.share_sale_count || 0);
-          document.getElementById('matchBulk').textContent = formatNumber(s.bulk_sale_count || 0);
-          document.getElementById('matchAmbiguous').textContent = formatNumber(s.ambiguous_count || 0);
-
-          // Failure analysis
-          const failTotal = (s.fail_no_match || 0) + (s.fail_no_ldcode || 0) || 1;
-          document.getElementById('failNoMatch').textContent = formatNumber(s.fail_no_match || 0);
-          document.getElementById('failNoLdcode').textContent = formatNumber(s.fail_no_ldcode || 0);
-          document.getElementById('failNoMatchBar').style.width = ((s.fail_no_match || 0) / failTotal * 100) + '%';
-          document.getElementById('failNoLdcodeBar').style.width = ((s.fail_no_ldcode || 0) / failTotal * 100) + '%';
-
-          // Insight
-          const noMatchPercent = ((s.fail_no_match || 0) / failTotal * 100).toFixed(1);
-          const failedPercent = (s.failed_count / total * 100).toFixed(1);
-          let insight = `${noMatchPercent}% of failures are condition mismatch (area/jimok/land_use).`;
-          if (s.fail_no_ldcode > 0) {
-            insight += ` ${formatNumber(s.fail_no_ldcode)} lack bjd_code - check region names.`;
-          }
-          document.getElementById('failureInsight').textContent = insight;
-        }
-      } catch (error) {
-        console.error('Failed to load land pipeline data:', error);
-      }
-    }
-
-    function renderExpiredRegionsList(regions, ttlCutoff) {
-      const container = document.getElementById('expiredRegionsList');
-      const now = new Date();
-      const expiredRegions = regions
-        .filter(r => new Date(r.last_collected_at) < ttlCutoff)
-        .sort((a, b) => new Date(a.last_collected_at) - new Date(b.last_collected_at))
-        .slice(0, 10);
-
-      if (expiredRegions.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 12px;">No expired regions</div>';
-        return;
-      }
-
-      container.innerHTML = expiredRegions.map(r => {
-        const lastCollected = new Date(r.last_collected_at);
-        const daysAgo = Math.floor((now - lastCollected) / (24 * 60 * 60 * 1000));
-        const regionName = r.region_name || r.lawd_cd;
-        return `
-          <div class="list-item" style="padding: 6px 0; border-bottom-color: var(--bg-tertiary);">
-            <div class="list-item-content">
-              <div class="list-item-title" style="font-size: 12px;">${regionName}</div>
-            </div>
-            <span class="badge badge-danger" style="font-size: 10px;">${daysAgo}d ago</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function refreshCollectionStatus() {
-      try {
-        const molitResult = await callAdminAPI('get_molit_status');
-        if (molitResult.regions) {
-          molitStatusData = molitResult.regions;
-          const landRegions = molitStatusData.filter(r => r.transaction_type === 'land');
-          const now = new Date();
-          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-          document.getElementById('collectionValidLand').textContent = formatNumber(landRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
-          document.getElementById('collectionExpiredLand').textContent = formatNumber(landRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length);
-          document.getElementById('collectionEmptyLand').textContent = formatNumber(landRegions.filter(r => r.total_records === 0).length);
-          renderExpiredRegionsList(landRegions, ttlCutoff);
-        }
-      } catch (error) {
-        console.error('Failed to refresh collection status:', error);
-      }
-    }
-
-    async function loadCommercialPipelineData() {
-      try {
-        // Load molit collection status for commercial
-        if (molitStatusData.length === 0) {
-          const molitResult = await callAdminAPI('get_molit_status');
-          if (molitResult.regions) {
-            molitStatusData = molitResult.regions;
-          }
-        }
-
-        const commercialRegions = molitStatusData.filter(r => r.transaction_type === 'commercial');
-        const now = new Date();
-        const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-        document.getElementById('collectionValidCommercial').textContent = formatNumber(commercialRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
-        document.getElementById('collectionExpiredCommercial').textContent = formatNumber(commercialRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length);
-        document.getElementById('collectionEmptyCommercial').textContent = formatNumber(commercialRegions.filter(r => r.total_records === 0).length);
-
-        // Load commercial matching stats
-        const result = await callCommercialMatcherAPI('status');
-        if (result.status) {
-          const s = result.status;
-          const total = s.total_commercial_transactions || 1;
-          const maskedTotal = (s.total_commercial_transactions || 0) - (s.not_masked_count || 0);
-
-          // Pipeline stages
-          document.getElementById('pipelineCommercialCollected').textContent = formatNumber(s.total_commercial_transactions);
-          document.getElementById('pipelineCommercialPending').textContent = formatNumber(s.unmatched_count);
-          document.getElementById('pipelineCommercialCompleted').textContent = formatNumber(s.matched_count);
-          document.getElementById('pipelineCommercialNotMasked').textContent = formatNumber(s.not_masked_count);
-
-          // Progress bars
-          document.getElementById('pipelineCommercialPendingBar').style.width = (s.unmatched_count / total * 100) + '%';
-          document.getElementById('pipelineCommercialCompletedBar').style.width = (s.matched_count / total * 100) + '%';
-          document.getElementById('pipelineCommercialNotMaskedBar').style.width = (s.not_masked_count / total * 100) + '%';
-
-          // Match rate
-          document.getElementById('pipelineCommercialRate').textContent = s.match_rate + '%';
-          document.getElementById('pipelineCommercialRateBar').style.width = s.match_rate + '%';
-
-          // Matching stats
-          document.getElementById('commercialMasked').textContent = formatNumber(maskedTotal);
-          document.getElementById('commercialNotMaskedStat').textContent = formatNumber(s.not_masked_count);
-          document.getElementById('commercialAmbiguous').textContent = formatNumber(s.ambiguous_count || 0);
-        }
-      } catch (error) {
-        console.error('Failed to load commercial pipeline data:', error);
-      }
-    }
-
-    let isCommercialMatchingRunning = false;
-
-    async function startCommercialMatching() {
-      if (isCommercialMatchingRunning) {
-        isCommercialMatchingRunning = false;
-        document.getElementById('btnStartCommercialMatching').innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-          Start Auto-Matching
-        `;
-        return;
-      }
-
-      isCommercialMatchingRunning = true;
-      document.getElementById('btnStartCommercialMatching').innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="6" y="4" width="4" height="16"></rect>
-          <rect x="14" y="4" width="4" height="16"></rect>
-        </svg>
-        Stop
-      `;
-      document.getElementById('commercialMatchingProgress').classList.remove('hidden');
-
-      let totalMatched = 0, totalAmbiguous = 0, totalFailed = 0;
-      let batchCount = 0;
-
-      // Get initial count
-      const initialResult = await callCommercialMatcherAPI('status');
-      const initialUnmatched = initialResult.status?.unmatched_count || 0;
-
-      while (isCommercialMatchingRunning) {
-        batchCount++;
-        document.getElementById('commercialMatchingStatus').textContent = `Processing batch #${batchCount}...`;
-
-        const result = await callCommercialMatcherAPI('batch_match', { limit: 100 });
-
-        if (!result.success) break;
-
-        const r = result.result || {};
-        const batchTotal = (r.matched || 0) + (r.ambiguous || 0) + (r.failed || 0) + (r.skipped || 0);
-
-        if (batchTotal === 0) {
-          document.getElementById('commercialMatchingStatus').textContent = `Completed! ${batchCount} batches processed.`;
-          break;
-        }
-
-        totalMatched += r.matched || 0;
-        totalAmbiguous += r.ambiguous || 0;
-        totalFailed += r.failed || 0;
-
-        const processed = totalMatched + totalAmbiguous + totalFailed;
-        const percent = Math.min(100, Math.round((processed / initialUnmatched) * 100));
-
-        document.getElementById('commercialMatchingPercent').textContent = percent + '%';
-        document.getElementById('commercialMatchingBar').style.width = percent + '%';
-        document.getElementById('commercialMatchingSuccess').textContent = formatNumber(totalMatched);
-        document.getElementById('commercialMatchingAmbiguous').textContent = formatNumber(totalAmbiguous);
-        document.getElementById('commercialMatchingFailed').textContent = formatNumber(totalFailed);
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      isCommercialMatchingRunning = false;
-      document.getElementById('btnStartCommercialMatching').innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        Start Auto-Matching
-      `;
-
-      await loadCommercialPipelineData();
-    }
-
-    // Auto-matching
-    async function startAutoMatching() {
-      if (isMatchingRunning) {
-        isMatchingRunning = false;
-        document.getElementById('btnStartMatching').innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-          Start Auto-Matching
-        `;
-        return;
-      }
-
-      isMatchingRunning = true;
-      document.getElementById('btnStartMatching').innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="6" y="4" width="4" height="16"></rect>
-          <rect x="14" y="4" width="4" height="16"></rect>
-        </svg>
-        Stop
-      `;
-      document.getElementById('matchingProgress').classList.remove('hidden');
-
-      let totalMatched = 0, totalAmbiguous = 0, totalFailed = 0;
-      let batchCount = 0;
-
-      // Get initial count
-      const initialResult = await callLandMatcherAPI('get_status');
-      const initialUnmatched = initialResult.stats?.unmatched_count || 0;
-
-      while (isMatchingRunning) {
-        batchCount++;
-        document.getElementById('matchingStatus').textContent = `Processing batch #${batchCount}...`;
-
-        const result = await callLandMatcherAPI('batch_match', { limit: 100 });
-
-        if (!result.success) break;
-
-        const r = result.result || {};
-        const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
-
-        if (batchTotal === 0) {
-          document.getElementById('matchingStatus').textContent = `Completed! ${batchCount} batches processed.`;
-          break;
-        }
-
-        totalMatched += (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0);
-        totalAmbiguous += r.ambiguous || 0;
-        totalFailed += r.failed || 0;
-
-        const processed = totalMatched + totalAmbiguous + totalFailed;
-        const percent = Math.min(100, Math.round((processed / initialUnmatched) * 100));
-
-        document.getElementById('matchingPercent').textContent = percent + '%';
-        document.getElementById('matchingBar').style.width = percent + '%';
-        document.getElementById('matchingSuccess').textContent = formatNumber(totalMatched);
-        document.getElementById('matchingAmbiguous').textContent = formatNumber(totalAmbiguous);
-        document.getElementById('matchingFailed').textContent = formatNumber(totalFailed);
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      isMatchingRunning = false;
-      document.getElementById('btnStartMatching').innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        Start Auto-Matching
-      `;
-
-      await loadLandPipelineData();
-    }
-
-    // API Helpers
-    async function callAdminAPI(action, data = {}) {
-      if (!adminToken) {
-        adminToken = localStorage.getItem('admin_token');
-      }
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ admin_token: adminToken, action, ...data }),
-      });
-      return response.json();
-    }
-
+    // API 헬퍼
     async function callLandMatcherAPI(action, data = {}) {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/land-pnu-matcher`, {
         method: 'POST',
@@ -2215,92 +2197,36 @@
       return response.json();
     }
 
-    // Utilities
     function formatNumber(num) {
       if (num === undefined || num === null) return '-';
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
-    function refreshData() {
-      loadSectionData(currentSection);
-      document.getElementById('lastSync').textContent = 'just now';
+    // 마지막 동기화 시간 업데이트
+    function updateLastSync() {
+      document.getElementById('lastSync').textContent = '마지막 동기화: ' + new Date().toLocaleTimeString('ko-KR');
     }
 
-    // Settings functions
-    async function loadSettingsData() {
-      try {
-        const result = await callAdminAPI('get_app_config');
-        const config = result.config;
-        if (config) {
-          document.getElementById('settingMinVersion').value = config.min_version || '1.0.0';
-          document.getElementById('settingForceUpdate').checked = config.force_update || false;
-          document.getElementById('settingMaintenanceMode').checked = config.maintenance_mode || false;
-          document.getElementById('settingMaintenanceMessage').value = config.maintenance_message || '';
-        }
-      } catch (error) {
-        console.error('Failed to load app settings:', error);
+    // refreshData 오버라이드
+    const originalRefreshData = typeof refreshData === 'function' ? refreshData : null;
+    window.refreshData = async function() {
+      if (originalRefreshData) {
+        await originalRefreshData();
       }
-    }
+      await loadOverviewData();
+      updateLastSync();
+    };
 
-    async function updateAppSettings() {
-      try {
-        const result = await callAdminAPI('update_app_config', {
-          min_version: document.getElementById('settingMinVersion').value,
-          force_update: document.getElementById('settingForceUpdate').checked,
-          maintenance_mode: document.getElementById('settingMaintenanceMode').checked,
-          maintenance_message: document.getElementById('settingMaintenanceMessage').value
-        });
-        if (result.success) {
-          showNotification('Settings saved successfully', 'success');
-        } else {
-          showNotification('Failed to save settings: ' + (result.error || 'Unknown error'), 'error');
-        }
-      } catch (error) {
-        console.error('Failed to update settings:', error);
-        showNotification('Failed to save settings', 'error');
-      }
-    }
-
-    // Simple notification
-    function showNotification(message, type = 'info') {
-      const colors = {
-        success: 'var(--accent-success)',
-        error: 'var(--accent-danger)',
-        info: 'var(--accent-primary)'
-      };
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        padding: 12px 20px;
-        background: ${colors[type]};
-        color: white;
-        border-radius: 6px;
-        font-size: 13px;
-        z-index: 1000;
-        animation: slideIn 0.2s ease;
-      `;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-    }
-
-    // Initialize
+    // 초기화
     document.addEventListener('DOMContentLoaded', () => {
-      // Check for admin token
-      if (!localStorage.getItem('admin_token')) {
-        // Redirect to login or show message
-        console.warn('No admin token found');
-      }
-      loadSectionData('overview');
+      // 인증 완료 후 개요 로드
+      setTimeout(() => {
+        if (localStorage.getItem('admin_token')) {
+          loadOverviewData();
+          updateLastSync();
+        }
+      }, 500);
     });
   </script>
-  <style>
-    @keyframes slideIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-  </style>
 </body>
 </html>
