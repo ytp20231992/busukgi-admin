@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SanGa Admin</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+    :root {
+      /* Background - Zinc scale */
+      --bg-base: #09090b;
+      --bg-primary: #0a0a0c;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-elevated: #3f3f46;
+
+      /* Text */
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #71717a;
+      --text-muted: #52525b;
+
+      /* Accent */
+      --accent-primary: #3b82f6;
+      --accent-success: #22c55e;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --accent-info: #06b6d4;
+
+      /* Border */
+      --border: #27272a;
+      --border-hover: #3f3f46;
+      --border-active: #52525b;
+
+      /* Sidebar */
+      --sidebar-width: 240px;
+      --sidebar-collapsed: 64px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Layout */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: width 0.2s ease;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+
+    .sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-info));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+    }
+
+    .sidebar-logo-text {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .sidebar-logo-text span {
+      color: var(--text-tertiary);
+      font-weight: 400;
+      font-size: 12px;
+      display: block;
+    }
+
+    .sidebar.collapsed .sidebar-logo-text {
+      display: none;
+    }
+
+    /* Navigation */
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 8px;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar.collapsed .nav-section-label {
+      display: none;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 3px;
+      height: 24px;
+      background: var(--accent-primary);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .nav-item-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .nav-item-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar.collapsed .nav-item-text {
+      display: none;
+    }
+
+    .nav-item-badge {
+      background: var(--accent-danger);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .sidebar.collapsed .nav-item-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      min-width: 8px;
+      height: 8px;
+      padding: 0;
+      font-size: 0;
+    }
+
+    /* Sub navigation */
+    .nav-sub {
+      margin-left: 32px;
+      margin-top: 4px;
+    }
+
+    .nav-sub .nav-item {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .sidebar.collapsed .nav-sub {
+      display: none;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sidebar-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 8px;
+      background: var(--bg-tertiary);
+      border: none;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top bar */
+    .topbar {
+      height: 56px;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-sync {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .topbar-sync .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-success);
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    /* Content area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Sections - hidden by default */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Stats cards grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.15s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .stat-card .stat-change {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+    }
+
+    .stat-card .stat-change.positive {
+      color: var(--accent-success);
+    }
+
+    .stat-card .stat-change.negative {
+      color: var(--accent-danger);
+    }
+
+    .stat-card.accent-blue { border-left: 3px solid var(--accent-primary); }
+    .stat-card.accent-green { border-left: 3px solid var(--accent-success); }
+    .stat-card.accent-yellow { border-left: 3px solid var(--accent-warning); }
+    .stat-card.accent-red { border-left: 3px solid var(--accent-danger); }
+    .stat-card.accent-cyan { border-left: 3px solid var(--accent-info); }
+
+    /* Alert cards */
+    .alerts-section {
+      margin-bottom: 24px;
+    }
+
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .alert-item:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-tertiary);
+    }
+
+    .alert-item .alert-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .alert-item .alert-icon.critical { background: var(--accent-danger); }
+    .alert-item .alert-icon.warning { background: var(--accent-warning); }
+    .alert-item .alert-icon.info { background: var(--accent-info); }
+
+    .alert-item .alert-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .alert-item .alert-action {
+      font-size: 12px;
+      color: var(--accent-primary);
+      white-space: nowrap;
+    }
+
+    /* Pipeline visualization */
+    .pipeline-section {
+      margin-bottom: 24px;
+    }
+
+    .pipeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .pipeline-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .pipeline-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pipeline-tab.active {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .pipeline-tab:hover:not(.active) {
+      color: var(--text-primary);
+    }
+
+    .pipeline-flow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .pipeline-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+      position: relative;
+    }
+
+    .pipeline-stage:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 2px;
+      background: var(--border);
+    }
+
+    .pipeline-stage:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid var(--border);
+    }
+
+    .pipeline-stage-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .pipeline-stage-icon.collected { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); }
+    .pipeline-stage-icon.pending { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+    .pipeline-stage-icon.completed { background: rgba(34, 197, 94, 0.15); color: var(--accent-success); }
+    .pipeline-stage-icon.failed { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
+
+    .pipeline-stage-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    .pipeline-stage-value {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+    }
+
+    .pipeline-stage-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .pipeline-stage-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .pipeline-stage-bar-fill.blue { background: var(--accent-primary); }
+    .pipeline-stage-bar-fill.yellow { background: var(--accent-warning); }
+    .pipeline-stage-bar-fill.green { background: var(--accent-success); }
+    .pipeline-stage-bar-fill.red { background: var(--accent-danger); }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .progress-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .progress-value {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-primary);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-target {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    /* Three column grid */
+    .three-col-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .panel-body {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-success {
+      background: var(--accent-success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* List items */
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-item-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .list-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-item-title {
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .list-item-subtitle {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .list-item-value {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+
+    .badge-success { background: rgba(34, 197, 94, 0.15); color: var(--accent-success); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
+    .badge-info { background: rgba(6, 182, 212, 0.15); color: var(--accent-info); }
+
+    /* Insight box */
+    .insight-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .insight-box-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-bottom: 6px;
+    }
+
+    .insight-box-content {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Bar chart */
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bar-chart-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-chart-label {
+      width: 80px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .bar-chart-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-chart-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .bar-chart-fill.danger { background: var(--accent-danger); }
+    .bar-chart-fill.warning { background: var(--accent-warning); }
+
+    .bar-chart-value {
+      width: 50px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .three-col-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .three-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-elevated);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-active);
+    }
+
+    /* Utilities */
+    .text-success { color: var(--accent-success); }
+    .text-warning { color: var(--accent-warning); }
+    .text-danger { color: var(--accent-danger); }
+    .text-info { color: var(--accent-info); }
+    .text-muted { color: var(--text-tertiary); }
+
+    .mt-4 { margin-top: 16px; }
+    .mb-4 { margin-bottom: 16px; }
+    .gap-4 { gap: 16px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">SA</div>
+          <div class="sidebar-logo-text">
+            SanGa Admin
+            <span>v2.0</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-label">Main</div>
+          <div class="nav-item active" data-section="overview" onclick="switchSection('overview')">
+            <span class="nav-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </span>
+            <span class="nav-item-text">Overview</span>
+            <span class="nav-item-badge" id="alertBadge">3</span>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">Manage</div>
+          <div class="nav-item" data-section="users" onclick="switchSection('users')">
+            <span class="nav-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </span>
+            <span class="nav-item-text">Users</span>
+          </div>
+          <div class="nav-sub" id="usersSubNav">
+            <div class="nav-item" data-section="users-members" onclick="switchSection('users-members')">
+              <span class="nav-item-text">Members</span>
+            </div>
+            <div class="nav-item" data-section="users-deleted" onclick="switchSection('users-deleted')">
+              <span class="nav-item-text">Deleted</span>
+            </div>
+            <div class="nav-item" data-section="users-groups" onclick="switchSection('users-groups')">
+              <span class="nav-item-text">Groups</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">Data</div>
+          <div class="nav-item" data-section="pipeline" onclick="switchSection('pipeline')">
+            <span class="nav-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </span>
+            <span class="nav-item-text">Data Pipeline</span>
+          </div>
+          <div class="nav-sub" id="pipelineSubNav">
+            <div class="nav-item" data-section="pipeline-land" onclick="switchSection('pipeline-land')">
+              <span class="nav-item-text">Land</span>
+            </div>
+            <div class="nav-item" data-section="pipeline-commercial" onclick="switchSection('pipeline-commercial')">
+              <span class="nav-item-text">Commercial</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">System</div>
+          <div class="nav-item" data-section="settings" onclick="switchSection('settings')">
+            <span class="nav-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </span>
+            <span class="nav-item-text">Settings</span>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="11 17 6 12 11 7"></polyline>
+            <polyline points="18 17 13 12 18 7"></polyline>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top bar -->
+      <header class="topbar">
+        <h1 class="topbar-title" id="pageTitle">Overview</h1>
+        <div class="topbar-actions">
+          <span class="topbar-sync">
+            <span class="dot"></span>
+            Last sync: <span id="lastSync">2 min ago</span>
+          </span>
+          <button class="btn btn-outline btn-sm" onclick="refreshData()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Overview Section -->
+        <section class="section active" id="section-overview">
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="stat-card accent-blue">
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value" id="statTotalUsers">-</div>
+              <div class="stat-change positive">+12 today</div>
+            </div>
+            <div class="stat-card accent-green">
+              <div class="stat-label">Active Subscriptions</div>
+              <div class="stat-value" id="statActiveSubscriptions">-</div>
+              <div class="stat-change" id="statSubscriptionRate">-% rate</div>
+            </div>
+            <div class="stat-card accent-cyan">
+              <div class="stat-label">Data Pipeline</div>
+              <div class="stat-value" id="statPipelineStatus">-</div>
+              <div class="stat-change" id="statPipelineDetail">-</div>
+            </div>
+            <div class="stat-card accent-yellow">
+              <div class="stat-label">System Health</div>
+              <div class="stat-value">OK</div>
+              <div class="stat-change text-success">All systems normal</div>
+            </div>
+          </div>
+
+          <!-- Alerts Section -->
+          <div class="alerts-section">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Attention Required</span>
+              </div>
+              <div class="card-body">
+                <div class="alert-list" id="alertList">
+                  <div class="alert-item" onclick="switchSection('pipeline-land')">
+                    <span class="alert-icon critical"></span>
+                    <span class="alert-text"><strong id="alertExpiredCount">-</strong> regions with expired TTL - need re-collection</span>
+                    <span class="alert-action">View &rarr;</span>
+                  </div>
+                  <div class="alert-item" onclick="switchSection('pipeline-land')">
+                    <span class="alert-icon warning"></span>
+                    <span class="alert-text"><strong id="alertUnmatchedCount">-</strong> pending matches - run auto-matching</span>
+                    <span class="alert-action">Start &rarr;</span>
+                  </div>
+                  <div class="alert-item" onclick="switchSection('users-members')">
+                    <span class="alert-icon info"></span>
+                    <span class="alert-text"><strong id="alertExpiringCount">-</strong> subscriptions expiring in 7 days</span>
+                    <span class="alert-action">View &rarr;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Grid -->
+          <div class="three-col-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">User Activity (7 days)</span>
+              </div>
+              <div class="panel-body">
+                <div style="text-align: center; padding: 40px 0; color: var(--text-tertiary);">
+                  Chart placeholder
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Land Pipeline</span>
+                <span class="badge badge-warning" id="landMatchRate">-% matched</span>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-primary);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Collected</div>
+                  </div>
+                  <span class="list-item-value" id="landCollected">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Pending</div>
+                  </div>
+                  <span class="list-item-value" id="landPending">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-success);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Completed</div>
+                  </div>
+                  <span class="list-item-value" id="landCompleted">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-danger);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Failed</div>
+                  </div>
+                  <span class="list-item-value" id="landFailed">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Commercial Pipeline</span>
+                <span class="badge badge-success" id="commercialMatchRate">-% matched</span>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-primary);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Collected</div>
+                  </div>
+                  <span class="list-item-value" id="commercialCollected">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-warning);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Pending</div>
+                  </div>
+                  <span class="list-item-value" id="commercialPending">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-success);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Completed</div>
+                  </div>
+                  <span class="list-item-value" id="commercialCompleted">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-info);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Not Masked</div>
+                  </div>
+                  <span class="list-item-value" id="commercialNotMasked">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pipeline Land Section -->
+        <section class="section" id="section-pipeline-land">
+          <!-- Pipeline Tabs -->
+          <div class="pipeline-header">
+            <div class="pipeline-tabs">
+              <button class="pipeline-tab active" onclick="switchPipelineType('land')">Land</button>
+              <button class="pipeline-tab" onclick="switchPipelineType('commercial')">Commercial</button>
+            </div>
+            <button class="btn btn-success" id="btnStartMatching" onclick="startAutoMatching()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Start Auto-Matching
+            </button>
+          </div>
+
+          <!-- Pipeline Flow -->
+          <div class="pipeline-flow">
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon collected">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Collected</div>
+              <div class="pipeline-stage-value" id="pipelineLandCollected">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill blue" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon pending">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Pending</div>
+              <div class="pipeline-stage-value" id="pipelineLandPending">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill yellow" id="pipelineLandPendingBar" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon completed">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Completed</div>
+              <div class="pipeline-stage-value" id="pipelineLandCompleted">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill green" id="pipelineLandCompletedBar" style="width: 25%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon failed">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Failed</div>
+              <div class="pipeline-stage-value" id="pipelineLandFailed">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill red" id="pipelineLandFailedBar" style="width: 25%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Section -->
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">Match Rate</span>
+              <span class="progress-value" id="pipelineLandRate">--%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="pipelineLandRateBar" style="width: 0%;"></div>
+            </div>
+            <div class="progress-target">Target: 80%</div>
+          </div>
+
+          <!-- Auto-matching progress (hidden by default) -->
+          <div class="progress-section hidden" id="matchingProgress">
+            <div class="progress-header">
+              <span class="progress-label" id="matchingStatus">Processing batch #1...</span>
+              <span class="progress-value" id="matchingPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="matchingBar" style="width: 0%;"></div>
+            </div>
+            <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px;">
+              <span>Success: <strong class="text-success" id="matchingSuccess">0</strong></span>
+              <span>Ambiguous: <strong class="text-warning" id="matchingAmbiguous">0</strong></span>
+              <span>Failed: <strong class="text-danger" id="matchingFailed">0</strong></span>
+            </div>
+          </div>
+
+          <!-- Three Column Grid -->
+          <div class="three-col-grid">
+            <!-- Collection Status -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Collection Status</span>
+                <button class="btn btn-outline btn-sm" onclick="refreshCollectionStatus()">Refresh</button>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-success);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">TTL Valid</div>
+                    <div class="list-item-subtitle">Within 60 days</div>
+                  </div>
+                  <span class="list-item-value" id="collectionValidLand">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-danger);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">TTL Expired</div>
+                    <div class="list-item-subtitle">Need re-collection</div>
+                  </div>
+                  <span class="list-item-value" id="collectionExpiredLand">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--text-tertiary);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Empty Regions</div>
+                    <div class="list-item-subtitle">No transactions</div>
+                  </div>
+                  <span class="list-item-value" id="collectionEmptyLand">-</span>
+                </div>
+                <!-- Expired regions list -->
+                <div class="mt-4" id="expiredRegionsList" style="max-height: 150px; overflow-y: auto;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Matching Engine -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Matching Engine</span>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Normal Match</div>
+                  </div>
+                  <span class="list-item-value" id="matchNormal">-</span>
+                </div>
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Share Sale</div>
+                  </div>
+                  <span class="list-item-value" id="matchShare">-</span>
+                </div>
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Bulk Sale</div>
+                  </div>
+                  <span class="list-item-value" id="matchBulk">-</span>
+                </div>
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Ambiguous</div>
+                  </div>
+                  <span class="list-item-value text-warning" id="matchAmbiguous">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Failure Analysis -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Failure Analysis</span>
+              </div>
+              <div class="panel-body">
+                <div class="bar-chart">
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">No Match</span>
+                    <div class="bar-chart-bar">
+                      <div class="bar-chart-fill danger" id="failNoMatchBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="bar-chart-value" id="failNoMatch">-</span>
+                  </div>
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">No LdCode</span>
+                    <div class="bar-chart-bar">
+                      <div class="bar-chart-fill warning" id="failNoLdcodeBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="bar-chart-value" id="failNoLdcode">-</span>
+                  </div>
+                </div>
+                <div class="insight-box">
+                  <div class="insight-box-title">Insight</div>
+                  <div class="insight-box-content" id="failureInsight">
+                    Loading analysis...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pipeline Commercial Section -->
+        <section class="section" id="section-pipeline-commercial">
+          <div class="pipeline-header">
+            <div class="pipeline-tabs">
+              <button class="pipeline-tab" onclick="switchPipelineType('land')">Land</button>
+              <button class="pipeline-tab active" onclick="switchPipelineType('commercial')">Commercial</button>
+            </div>
+            <button class="btn btn-success" id="btnStartCommercialMatching" onclick="startCommercialMatching()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Start Auto-Matching
+            </button>
+          </div>
+
+          <!-- Pipeline Flow -->
+          <div class="pipeline-flow">
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon collected">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Collected</div>
+              <div class="pipeline-stage-value" id="pipelineCommercialCollected">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill blue" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon pending">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Pending</div>
+              <div class="pipeline-stage-value" id="pipelineCommercialPending">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill yellow" id="pipelineCommercialPendingBar" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon completed">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Completed</div>
+              <div class="pipeline-stage-value" id="pipelineCommercialCompleted">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill green" id="pipelineCommercialCompletedBar" style="width: 25%;"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-stage">
+              <div class="pipeline-stage-icon" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-info);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                </svg>
+              </div>
+              <div class="pipeline-stage-label">Not Masked</div>
+              <div class="pipeline-stage-value" id="pipelineCommercialNotMasked">-</div>
+              <div class="pipeline-stage-bar">
+                <div class="pipeline-stage-bar-fill" style="background: var(--accent-info);" id="pipelineCommercialNotMaskedBar" style="width: 10%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Section -->
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">Match Rate (Masked Only)</span>
+              <span class="progress-value" id="pipelineCommercialRate">--%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="pipelineCommercialRateBar" style="width: 0%;"></div>
+            </div>
+            <div class="progress-target">Target: 80%</div>
+          </div>
+
+          <!-- Auto-matching progress (hidden by default) -->
+          <div class="progress-section hidden" id="commercialMatchingProgress">
+            <div class="progress-header">
+              <span class="progress-label" id="commercialMatchingStatus">Processing batch #1...</span>
+              <span class="progress-value" id="commercialMatchingPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="commercialMatchingBar" style="width: 0%;"></div>
+            </div>
+            <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px;">
+              <span>Success: <strong class="text-success" id="commercialMatchingSuccess">0</strong></span>
+              <span>Ambiguous: <strong class="text-warning" id="commercialMatchingAmbiguous">0</strong></span>
+              <span>Failed: <strong class="text-danger" id="commercialMatchingFailed">0</strong></span>
+            </div>
+          </div>
+
+          <!-- Three Column Grid -->
+          <div class="three-col-grid">
+            <!-- Collection Status -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Collection Status</span>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-success);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">TTL Valid</div>
+                  </div>
+                  <span class="list-item-value" id="collectionValidCommercial">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--accent-danger);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">TTL Expired</div>
+                  </div>
+                  <span class="list-item-value" id="collectionExpiredCommercial">-</span>
+                </div>
+                <div class="list-item">
+                  <span class="list-item-icon" style="background: var(--text-tertiary);"></span>
+                  <div class="list-item-content">
+                    <div class="list-item-title">Empty Regions</div>
+                  </div>
+                  <span class="list-item-value" id="collectionEmptyCommercial">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Matching Stats -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Matching Stats</span>
+              </div>
+              <div class="panel-body">
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Masked (Target)</div>
+                  </div>
+                  <span class="list-item-value" id="commercialMasked">-</span>
+                </div>
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Not Masked (Skip)</div>
+                  </div>
+                  <span class="list-item-value text-info" id="commercialNotMaskedStat">-</span>
+                </div>
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Ambiguous</div>
+                  </div>
+                  <span class="list-item-value text-warning" id="commercialAmbiguous">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Info</span>
+              </div>
+              <div class="panel-body">
+                <div class="insight-box" style="margin-top: 0;">
+                  <div class="insight-box-title">Note</div>
+                  <div class="insight-box-content">
+                    Commercial transactions without masked addresses (floor/unit visible) are skipped during matching as they don't need PNU resolution.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Users Section -->
+        <section class="section" id="section-users">
+          <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card accent-blue">
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value" id="userStatTotal">-</div>
+            </div>
+            <div class="stat-card accent-green">
+              <div class="stat-label">Active Subscriptions</div>
+              <div class="stat-value" id="userStatActive">-</div>
+            </div>
+            <div class="stat-card accent-yellow">
+              <div class="stat-label">Expiring Soon (7d)</div>
+              <div class="stat-value" id="userStatExpiring">-</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+              <div style="color: var(--text-tertiary); margin-bottom: 16px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5;">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <div style="color: var(--text-secondary); margin-bottom: 20px;">
+                User management features are available in the classic admin panel
+              </div>
+              <a href="index.html" class="btn btn-primary">
+                Open Classic Admin Panel
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-users-members">
+          <div class="card">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+              <div style="color: var(--text-secondary); margin-bottom: 20px;">
+                Member management is available in the classic admin panel
+              </div>
+              <a href="index.html" class="btn btn-primary">
+                Open Classic Admin Panel
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-users-deleted">
+          <div class="card">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+              <div style="color: var(--text-secondary); margin-bottom: 20px;">
+                Deleted user management is available in the classic admin panel
+              </div>
+              <a href="index.html" class="btn btn-primary">
+                Open Classic Admin Panel
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-users-groups">
+          <div class="card">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+              <div style="color: var(--text-secondary); margin-bottom: 20px;">
+                Group management is available in the classic admin panel
+              </div>
+              <a href="index.html" class="btn btn-primary">
+                Open Classic Admin Panel
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="section" id="section-settings">
+          <div class="card" style="max-width: 600px;">
+            <div class="card-header">
+              <span class="card-title">App Configuration</span>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Minimum App Version</label>
+                <input type="text" id="settingMinVersion" placeholder="e.g. 1.0.0" style="width: 100%; padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 14px;">
+                <small style="display: block; margin-top: 6px; color: var(--text-tertiary); font-size: 12px;">Apps below this version will be required to update</small>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingForceUpdate" style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                  <span style="font-size: 14px; color: var(--text-primary);">Force Update</span>
+                </label>
+                <small style="display: block; margin-top: 6px; margin-left: 28px; color: var(--text-tertiary); font-size: 12px;">When enabled, users must update to continue using the app</small>
+              </div>
+
+              <div style="margin-bottom: 20px; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingMaintenanceMode" style="width: 18px; height: 18px; accent-color: var(--accent-warning);">
+                  <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">Maintenance Mode</span>
+                </label>
+                <small style="display: block; margin-top: 6px; margin-left: 28px; color: var(--text-secondary); font-size: 12px;">Enable to temporarily block all app access</small>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Maintenance Message</label>
+                <textarea id="settingMaintenanceMessage" placeholder="Message shown to users during maintenance" rows="3" style="width: 100%; padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 14px; resize: vertical;"></textarea>
+              </div>
+
+              <button class="btn btn-primary" onclick="updateAppSettings()" style="width: 100%;">
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pipeline Section (redirect) -->
+        <section class="section" id="section-pipeline">
+          <!-- Redirects to pipeline-land -->
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Constants
+    const SUPABASE_URL = 'https://asdqtfuvjlsgjazseekm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZHF0ZnV2amxzZ2phenNlZWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NzAwODAsImV4cCI6MjA3ODM0NjA4MH0.wLnBozm_DHUQpM68PZXXJ_02u_tW3t5KVcupove926U';
+
+    // State
+    let currentSection = 'overview';
+    let isMatchingRunning = false;
+    let molitStatusData = [];
+    let adminToken = localStorage.getItem('admin_token');
+
+    // Navigation
+    function switchSection(sectionId) {
+      // Handle redirects
+      if (sectionId === 'pipeline') sectionId = 'pipeline-land';
+
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === sectionId) {
+          item.classList.add('active');
+        }
+      });
+
+      // Update sections
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+
+      const targetSection = document.getElementById('section-' + sectionId);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+
+      // Update title
+      const titles = {
+        'overview': 'Overview',
+        'users': 'Users',
+        'users-members': 'Members',
+        'users-deleted': 'Deleted Users',
+        'users-groups': 'Groups',
+        'pipeline': 'Data Pipeline',
+        'pipeline-land': 'Land Pipeline',
+        'pipeline-commercial': 'Commercial Pipeline',
+        'settings': 'Settings'
+      };
+      document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
+
+      currentSection = sectionId;
+
+      // Load section data
+      loadSectionData(sectionId);
+    }
+
+    function switchPipelineType(type) {
+      switchSection('pipeline-' + type);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // Data Loading
+    async function loadSectionData(sectionId) {
+      switch(sectionId) {
+        case 'overview':
+          await loadOverviewData();
+          break;
+        case 'pipeline-land':
+          await loadLandPipelineData();
+          break;
+        case 'pipeline-commercial':
+          await loadCommercialPipelineData();
+          break;
+        case 'settings':
+          await loadSettingsData();
+          break;
+        case 'users':
+        case 'users-members':
+        case 'users-deleted':
+        case 'users-groups':
+          await loadUsersStats();
+          break;
+      }
+    }
+
+    async function loadUsersStats() {
+      try {
+        const result = await callAdminAPI('get_stats');
+        if (result.stats) {
+          const s = result.stats;
+          document.getElementById('userStatTotal').textContent = formatNumber(s.totalUsers);
+          document.getElementById('userStatActive').textContent = formatNumber(s.activeSubscriptions);
+          document.getElementById('userStatExpiring').textContent = formatNumber(s.expiringSoon);
+        }
+      } catch (error) {
+        console.error('Failed to load user stats:', error);
+      }
+    }
+
+    async function loadOverviewData() {
+      try {
+        // Load user stats
+        const adminResult = await callAdminAPI('get_stats');
+        if (adminResult.stats) {
+          const s = adminResult.stats;
+          document.getElementById('statTotalUsers').textContent = formatNumber(s.totalUsers);
+          document.getElementById('statActiveSubscriptions').textContent = formatNumber(s.activeSubscriptions);
+          const subRate = s.totalUsers > 0 ? Math.round(s.activeSubscriptions / s.totalUsers * 100) : 0;
+          document.getElementById('statSubscriptionRate').textContent = subRate + '% rate';
+          document.getElementById('alertExpiringCount').textContent = formatNumber(s.expiringSoon);
+        }
+
+        // Load molit collection status
+        const molitResult = await callAdminAPI('get_molit_status');
+        if (molitResult.regions) {
+          molitStatusData = molitResult.regions;
+          const now = new Date();
+          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+          const expiredCount = molitStatusData.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
+          document.getElementById('alertExpiredCount').textContent = formatNumber(expiredCount);
+          document.getElementById('collectionValid').textContent = formatNumber(molitStatusData.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
+          document.getElementById('collectionExpired').textContent = formatNumber(expiredCount);
+          document.getElementById('collectionEmpty').textContent = formatNumber(molitStatusData.filter(r => r.total_records === 0).length);
+        }
+
+        // Load land stats
+        const landResult = await callLandMatcherAPI('get_status');
+        if (landResult.stats) {
+          const s = landResult.stats;
+          document.getElementById('landCollected').textContent = formatNumber(s.total_land_transactions);
+          document.getElementById('landPending').textContent = formatNumber(s.unmatched_count);
+          document.getElementById('landCompleted').textContent = formatNumber(s.matched_count);
+          document.getElementById('landFailed').textContent = formatNumber(s.failed_count);
+
+          const matchRateClass = s.match_rate >= 50 ? 'badge-success' : s.match_rate >= 30 ? 'badge-warning' : 'badge-danger';
+          const landMatchBadge = document.getElementById('landMatchRate');
+          landMatchBadge.textContent = s.match_rate + '% matched';
+          landMatchBadge.className = 'badge ' + matchRateClass;
+
+          document.getElementById('alertUnmatchedCount').textContent = formatNumber(s.unmatched_count);
+          document.getElementById('statPipelineStatus').textContent = s.match_rate + '%';
+          document.getElementById('statPipelineDetail').textContent = 'Land match rate';
+        }
+
+        // Load commercial stats
+        const commercialResult = await callCommercialMatcherAPI('status');
+        if (commercialResult.status) {
+          const s = commercialResult.status;
+          document.getElementById('commercialCollected').textContent = formatNumber(s.total_commercial_transactions);
+          document.getElementById('commercialPending').textContent = formatNumber(s.unmatched_count);
+          document.getElementById('commercialCompleted').textContent = formatNumber(s.matched_count);
+          document.getElementById('commercialNotMasked').textContent = formatNumber(s.not_masked_count);
+
+          const matchRateClass = s.match_rate >= 50 ? 'badge-success' : s.match_rate >= 30 ? 'badge-warning' : 'badge-danger';
+          const commMatchBadge = document.getElementById('commercialMatchRate');
+          commMatchBadge.textContent = s.match_rate + '% matched';
+          commMatchBadge.className = 'badge ' + matchRateClass;
+        }
+
+        // Update alert badge count
+        updateAlertBadge();
+
+      } catch (error) {
+        console.error('Failed to load overview data:', error);
+      }
+    }
+
+    function updateAlertBadge() {
+      // Count visible alerts (simplified)
+      let alertCount = 0;
+      const alerts = document.querySelectorAll('#alertList .alert-item');
+      alerts.forEach(alert => {
+        const countEl = alert.querySelector('strong');
+        if (countEl && countEl.textContent !== '-' && countEl.textContent !== '0') {
+          alertCount++;
+        }
+      });
+      const badge = document.getElementById('alertBadge');
+      badge.textContent = alertCount;
+      badge.style.display = alertCount > 0 ? '' : 'none';
+    }
+
+    async function loadLandPipelineData() {
+      try {
+        // Load molit collection status for land
+        const molitResult = await callAdminAPI('get_molit_status');
+        if (molitResult.regions) {
+          molitStatusData = molitResult.regions;
+          const landRegions = molitStatusData.filter(r => r.transaction_type === 'land');
+          const now = new Date();
+          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+          const validCount = landRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length;
+          const expiredCount = landRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length;
+          const emptyCount = landRegions.filter(r => r.total_records === 0).length;
+
+          document.getElementById('collectionValidLand').textContent = formatNumber(validCount);
+          document.getElementById('collectionExpiredLand').textContent = formatNumber(expiredCount);
+          document.getElementById('collectionEmptyLand').textContent = formatNumber(emptyCount);
+
+          // Render expired regions list
+          renderExpiredRegionsList(landRegions, ttlCutoff);
+        }
+
+        const result = await callLandMatcherAPI('get_status');
+        if (result.stats) {
+          const s = result.stats;
+          const total = s.total_land_transactions || 1;
+
+          // Pipeline stages
+          document.getElementById('pipelineLandCollected').textContent = formatNumber(s.total_land_transactions);
+          document.getElementById('pipelineLandPending').textContent = formatNumber(s.unmatched_count);
+          document.getElementById('pipelineLandCompleted').textContent = formatNumber(s.matched_count);
+          document.getElementById('pipelineLandFailed').textContent = formatNumber(s.failed_count);
+
+          // Progress bars
+          document.getElementById('pipelineLandPendingBar').style.width = (s.unmatched_count / total * 100) + '%';
+          document.getElementById('pipelineLandCompletedBar').style.width = (s.matched_count / total * 100) + '%';
+          document.getElementById('pipelineLandFailedBar').style.width = (s.failed_count / total * 100) + '%';
+
+          // Match rate
+          document.getElementById('pipelineLandRate').textContent = s.match_rate + '%';
+          document.getElementById('pipelineLandRateBar').style.width = s.match_rate + '%';
+
+          // Matching details
+          const normalMatch = s.matched_count - (s.share_sale_count || 0) - (s.bulk_sale_count || 0);
+          document.getElementById('matchNormal').textContent = formatNumber(normalMatch);
+          document.getElementById('matchShare').textContent = formatNumber(s.share_sale_count || 0);
+          document.getElementById('matchBulk').textContent = formatNumber(s.bulk_sale_count || 0);
+          document.getElementById('matchAmbiguous').textContent = formatNumber(s.ambiguous_count || 0);
+
+          // Failure analysis
+          const failTotal = (s.fail_no_match || 0) + (s.fail_no_ldcode || 0) || 1;
+          document.getElementById('failNoMatch').textContent = formatNumber(s.fail_no_match || 0);
+          document.getElementById('failNoLdcode').textContent = formatNumber(s.fail_no_ldcode || 0);
+          document.getElementById('failNoMatchBar').style.width = ((s.fail_no_match || 0) / failTotal * 100) + '%';
+          document.getElementById('failNoLdcodeBar').style.width = ((s.fail_no_ldcode || 0) / failTotal * 100) + '%';
+
+          // Insight
+          const noMatchPercent = ((s.fail_no_match || 0) / failTotal * 100).toFixed(1);
+          const failedPercent = (s.failed_count / total * 100).toFixed(1);
+          let insight = `${noMatchPercent}% of failures are condition mismatch (area/jimok/land_use).`;
+          if (s.fail_no_ldcode > 0) {
+            insight += ` ${formatNumber(s.fail_no_ldcode)} lack bjd_code - check region names.`;
+          }
+          document.getElementById('failureInsight').textContent = insight;
+        }
+      } catch (error) {
+        console.error('Failed to load land pipeline data:', error);
+      }
+    }
+
+    function renderExpiredRegionsList(regions, ttlCutoff) {
+      const container = document.getElementById('expiredRegionsList');
+      const now = new Date();
+      const expiredRegions = regions
+        .filter(r => new Date(r.last_collected_at) < ttlCutoff)
+        .sort((a, b) => new Date(a.last_collected_at) - new Date(b.last_collected_at))
+        .slice(0, 10);
+
+      if (expiredRegions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 12px;">No expired regions</div>';
+        return;
+      }
+
+      container.innerHTML = expiredRegions.map(r => {
+        const lastCollected = new Date(r.last_collected_at);
+        const daysAgo = Math.floor((now - lastCollected) / (24 * 60 * 60 * 1000));
+        const regionName = r.region_name || r.lawd_cd;
+        return `
+          <div class="list-item" style="padding: 6px 0; border-bottom-color: var(--bg-tertiary);">
+            <div class="list-item-content">
+              <div class="list-item-title" style="font-size: 12px;">${regionName}</div>
+            </div>
+            <span class="badge badge-danger" style="font-size: 10px;">${daysAgo}d ago</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function refreshCollectionStatus() {
+      try {
+        const molitResult = await callAdminAPI('get_molit_status');
+        if (molitResult.regions) {
+          molitStatusData = molitResult.regions;
+          const landRegions = molitStatusData.filter(r => r.transaction_type === 'land');
+          const now = new Date();
+          const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+          document.getElementById('collectionValidLand').textContent = formatNumber(landRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
+          document.getElementById('collectionExpiredLand').textContent = formatNumber(landRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length);
+          document.getElementById('collectionEmptyLand').textContent = formatNumber(landRegions.filter(r => r.total_records === 0).length);
+          renderExpiredRegionsList(landRegions, ttlCutoff);
+        }
+      } catch (error) {
+        console.error('Failed to refresh collection status:', error);
+      }
+    }
+
+    async function loadCommercialPipelineData() {
+      try {
+        // Load molit collection status for commercial
+        if (molitStatusData.length === 0) {
+          const molitResult = await callAdminAPI('get_molit_status');
+          if (molitResult.regions) {
+            molitStatusData = molitResult.regions;
+          }
+        }
+
+        const commercialRegions = molitStatusData.filter(r => r.transaction_type === 'commercial');
+        const now = new Date();
+        const ttlCutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+        document.getElementById('collectionValidCommercial').textContent = formatNumber(commercialRegions.filter(r => new Date(r.last_collected_at) >= ttlCutoff).length);
+        document.getElementById('collectionExpiredCommercial').textContent = formatNumber(commercialRegions.filter(r => new Date(r.last_collected_at) < ttlCutoff).length);
+        document.getElementById('collectionEmptyCommercial').textContent = formatNumber(commercialRegions.filter(r => r.total_records === 0).length);
+
+        // Load commercial matching stats
+        const result = await callCommercialMatcherAPI('status');
+        if (result.status) {
+          const s = result.status;
+          const total = s.total_commercial_transactions || 1;
+          const maskedTotal = (s.total_commercial_transactions || 0) - (s.not_masked_count || 0);
+
+          // Pipeline stages
+          document.getElementById('pipelineCommercialCollected').textContent = formatNumber(s.total_commercial_transactions);
+          document.getElementById('pipelineCommercialPending').textContent = formatNumber(s.unmatched_count);
+          document.getElementById('pipelineCommercialCompleted').textContent = formatNumber(s.matched_count);
+          document.getElementById('pipelineCommercialNotMasked').textContent = formatNumber(s.not_masked_count);
+
+          // Progress bars
+          document.getElementById('pipelineCommercialPendingBar').style.width = (s.unmatched_count / total * 100) + '%';
+          document.getElementById('pipelineCommercialCompletedBar').style.width = (s.matched_count / total * 100) + '%';
+          document.getElementById('pipelineCommercialNotMaskedBar').style.width = (s.not_masked_count / total * 100) + '%';
+
+          // Match rate
+          document.getElementById('pipelineCommercialRate').textContent = s.match_rate + '%';
+          document.getElementById('pipelineCommercialRateBar').style.width = s.match_rate + '%';
+
+          // Matching stats
+          document.getElementById('commercialMasked').textContent = formatNumber(maskedTotal);
+          document.getElementById('commercialNotMaskedStat').textContent = formatNumber(s.not_masked_count);
+          document.getElementById('commercialAmbiguous').textContent = formatNumber(s.ambiguous_count || 0);
+        }
+      } catch (error) {
+        console.error('Failed to load commercial pipeline data:', error);
+      }
+    }
+
+    let isCommercialMatchingRunning = false;
+
+    async function startCommercialMatching() {
+      if (isCommercialMatchingRunning) {
+        isCommercialMatchingRunning = false;
+        document.getElementById('btnStartCommercialMatching').innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Start Auto-Matching
+        `;
+        return;
+      }
+
+      isCommercialMatchingRunning = true;
+      document.getElementById('btnStartCommercialMatching').innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        Stop
+      `;
+      document.getElementById('commercialMatchingProgress').classList.remove('hidden');
+
+      let totalMatched = 0, totalAmbiguous = 0, totalFailed = 0;
+      let batchCount = 0;
+
+      // Get initial count
+      const initialResult = await callCommercialMatcherAPI('status');
+      const initialUnmatched = initialResult.status?.unmatched_count || 0;
+
+      while (isCommercialMatchingRunning) {
+        batchCount++;
+        document.getElementById('commercialMatchingStatus').textContent = `Processing batch #${batchCount}...`;
+
+        const result = await callCommercialMatcherAPI('batch_match', { limit: 100 });
+
+        if (!result.success) break;
+
+        const r = result.result || {};
+        const batchTotal = (r.matched || 0) + (r.ambiguous || 0) + (r.failed || 0) + (r.skipped || 0);
+
+        if (batchTotal === 0) {
+          document.getElementById('commercialMatchingStatus').textContent = `Completed! ${batchCount} batches processed.`;
+          break;
+        }
+
+        totalMatched += r.matched || 0;
+        totalAmbiguous += r.ambiguous || 0;
+        totalFailed += r.failed || 0;
+
+        const processed = totalMatched + totalAmbiguous + totalFailed;
+        const percent = Math.min(100, Math.round((processed / initialUnmatched) * 100));
+
+        document.getElementById('commercialMatchingPercent').textContent = percent + '%';
+        document.getElementById('commercialMatchingBar').style.width = percent + '%';
+        document.getElementById('commercialMatchingSuccess').textContent = formatNumber(totalMatched);
+        document.getElementById('commercialMatchingAmbiguous').textContent = formatNumber(totalAmbiguous);
+        document.getElementById('commercialMatchingFailed').textContent = formatNumber(totalFailed);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      isCommercialMatchingRunning = false;
+      document.getElementById('btnStartCommercialMatching').innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Start Auto-Matching
+      `;
+
+      await loadCommercialPipelineData();
+    }
+
+    // Auto-matching
+    async function startAutoMatching() {
+      if (isMatchingRunning) {
+        isMatchingRunning = false;
+        document.getElementById('btnStartMatching').innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Start Auto-Matching
+        `;
+        return;
+      }
+
+      isMatchingRunning = true;
+      document.getElementById('btnStartMatching').innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        Stop
+      `;
+      document.getElementById('matchingProgress').classList.remove('hidden');
+
+      let totalMatched = 0, totalAmbiguous = 0, totalFailed = 0;
+      let batchCount = 0;
+
+      // Get initial count
+      const initialResult = await callLandMatcherAPI('get_status');
+      const initialUnmatched = initialResult.stats?.unmatched_count || 0;
+
+      while (isMatchingRunning) {
+        batchCount++;
+        document.getElementById('matchingStatus').textContent = `Processing batch #${batchCount}...`;
+
+        const result = await callLandMatcherAPI('batch_match', { limit: 100 });
+
+        if (!result.success) break;
+
+        const r = result.result || {};
+        const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
+
+        if (batchTotal === 0) {
+          document.getElementById('matchingStatus').textContent = `Completed! ${batchCount} batches processed.`;
+          break;
+        }
+
+        totalMatched += (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0);
+        totalAmbiguous += r.ambiguous || 0;
+        totalFailed += r.failed || 0;
+
+        const processed = totalMatched + totalAmbiguous + totalFailed;
+        const percent = Math.min(100, Math.round((processed / initialUnmatched) * 100));
+
+        document.getElementById('matchingPercent').textContent = percent + '%';
+        document.getElementById('matchingBar').style.width = percent + '%';
+        document.getElementById('matchingSuccess').textContent = formatNumber(totalMatched);
+        document.getElementById('matchingAmbiguous').textContent = formatNumber(totalAmbiguous);
+        document.getElementById('matchingFailed').textContent = formatNumber(totalFailed);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      isMatchingRunning = false;
+      document.getElementById('btnStartMatching').innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Start Auto-Matching
+      `;
+
+      await loadLandPipelineData();
+    }
+
+    // API Helpers
+    async function callAdminAPI(action, data = {}) {
+      if (!adminToken) {
+        adminToken = localStorage.getItem('admin_token');
+      }
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-manage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ admin_token: adminToken, action, ...data }),
+      });
+      return response.json();
+    }
+
+    async function callLandMatcherAPI(action, data = {}) {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/land-pnu-matcher`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ action, ...data }),
+      });
+      return response.json();
+    }
+
+    async function callCommercialMatcherAPI(action, data = {}) {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/commercial-pnu-matcher`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ action, ...data }),
+      });
+      return response.json();
+    }
+
+    // Utilities
+    function formatNumber(num) {
+      if (num === undefined || num === null) return '-';
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function refreshData() {
+      loadSectionData(currentSection);
+      document.getElementById('lastSync').textContent = 'just now';
+    }
+
+    // Settings functions
+    async function loadSettingsData() {
+      try {
+        const result = await callAdminAPI('get_app_config');
+        const config = result.config;
+        if (config) {
+          document.getElementById('settingMinVersion').value = config.min_version || '1.0.0';
+          document.getElementById('settingForceUpdate').checked = config.force_update || false;
+          document.getElementById('settingMaintenanceMode').checked = config.maintenance_mode || false;
+          document.getElementById('settingMaintenanceMessage').value = config.maintenance_message || '';
+        }
+      } catch (error) {
+        console.error('Failed to load app settings:', error);
+      }
+    }
+
+    async function updateAppSettings() {
+      try {
+        const result = await callAdminAPI('update_app_config', {
+          min_version: document.getElementById('settingMinVersion').value,
+          force_update: document.getElementById('settingForceUpdate').checked,
+          maintenance_mode: document.getElementById('settingMaintenanceMode').checked,
+          maintenance_message: document.getElementById('settingMaintenanceMessage').value
+        });
+        if (result.success) {
+          showNotification('Settings saved successfully', 'success');
+        } else {
+          showNotification('Failed to save settings: ' + (result.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Failed to update settings:', error);
+        showNotification('Failed to save settings', 'error');
+      }
+    }
+
+    // Simple notification
+    function showNotification(message, type = 'info') {
+      const colors = {
+        success: 'var(--accent-success)',
+        error: 'var(--accent-danger)',
+        info: 'var(--accent-primary)'
+      };
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 12px 20px;
+        background: ${colors[type]};
+        color: white;
+        border-radius: 6px;
+        font-size: 13px;
+        z-index: 1000;
+        animation: slideIn 0.2s ease;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check for admin token
+      if (!localStorage.getItem('admin_token')) {
+        // Redirect to login or show message
+        console.warn('No admin token found');
+      }
+      loadSectionData('overview');
+    });
+  </script>
+  <style>
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</body>
+</html>

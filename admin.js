@@ -1594,18 +1594,29 @@ async function loadPnuStats() {
     if (result.stats) {
       const stats = result.stats;
 
-      // 통계 업데이트
+      // 기본 통계
       document.getElementById('pnuStatTotal').textContent = formatNumber(stats.total_land_transactions || 0);
       document.getElementById('pnuStatMatched').textContent = formatNumber(stats.matched_count || 0);
       document.getElementById('pnuStatUnmatched').textContent = formatNumber(stats.unmatched_count || 0);
       document.getElementById('pnuStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
-      document.getElementById('pnuStatFailed').textContent = formatNumber(stats.failed_count || 0);
 
-      // 지분거래 및 일괄매각 통계 (bulk_sale_group 필드 기반)
+      // 지분거래/일괄매각 상세
       const shareSaleEl = document.getElementById('pnuStatShareSale');
       const bulkSaleEl = document.getElementById('pnuStatBulkSale');
+      const normalMatchedEl = document.getElementById('pnuStatMatchedNormal');
       if (shareSaleEl) shareSaleEl.textContent = formatNumber(stats.share_sale_count || 0);
       if (bulkSaleEl) bulkSaleEl.textContent = formatNumber(stats.bulk_sale_count || 0);
+      // 일반 매칭 = 전체 매칭 - 지분 - 일괄
+      if (normalMatchedEl) {
+        const normalCount = (stats.matched_count || 0) - (stats.share_sale_count || 0) - (stats.bulk_sale_count || 0);
+        normalMatchedEl.textContent = formatNumber(normalCount);
+      }
+
+      // 실패 사유별 통계 (새 UI)
+      const failLdcodeEl = document.getElementById('pnuStatFailLdcode');
+      const failNoMatchEl = document.getElementById('pnuStatFailNoMatch');
+      if (failLdcodeEl) failLdcodeEl.textContent = formatNumber(stats.fail_no_ldcode || 0);
+      if (failNoMatchEl) failNoMatchEl.textContent = formatNumber(stats.fail_no_match || 0);
 
       // 매칭률 업데이트
       const matchRate = stats.match_rate || 0;
@@ -1614,6 +1625,7 @@ async function loadPnuStats() {
 
       // 전역 변수에 미처리 건수 저장 (자동 매칭용)
       window.pnuUnmatchedCount = stats.unmatched_count || 0;
+      window.pnuTotalCount = stats.total_land_transactions || 0;
     }
 
     // 중복 후보 목록
@@ -1808,6 +1820,7 @@ function updatePnuResultCard(matched, ambiguous, failed, status, borderColor = '
 async function runPnuQuickMatch() {
   const btn = document.getElementById('btnRunPnuQuick');
   const btnText = document.getElementById('btnRunPnuQuickText');
+  const progressSection = document.getElementById('pnuProgressSection');
 
   // 이미 실행 중이면 중지
   if (pnuAutoMatchRunning) {
@@ -1816,7 +1829,12 @@ async function runPnuQuickMatch() {
     return;
   }
 
-  if (!confirm('남은 데이터가 없을 때까지 100건씩 자동으로 매칭합니다.\n(버튼을 다시 클릭하면 중지됩니다)\n\n시작하시겠습니까?')) {
+  // 먼저 통계 로드해서 미처리 건수 확인
+  await loadPnuStats();
+  const initialUnmatched = window.pnuUnmatchedCount || 0;
+
+  if (initialUnmatched === 0) {
+    showSuccess('처리할 미처리 건이 없습니다.');
     return;
   }
 
@@ -1824,16 +1842,34 @@ async function runPnuQuickMatch() {
   btnText.textContent = '⏹️ 중지';
   btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
 
+  // 진행 섹션 표시
+  progressSection.style.display = 'block';
+
   // 누적 통계
   let totalMatched = 0;
   let totalAmbiguous = 0;
   let totalFailed = 0;
   let batchCount = 0;
+  const startTime = Date.now();
+
+  // 진행률 업데이트 함수
+  const updateProgress = (status) => {
+    const processed = totalMatched + totalAmbiguous + totalFailed;
+    const percent = Math.min(100, Math.round((processed / initialUnmatched) * 100));
+
+    document.getElementById('pnuProgressStatus').textContent = status;
+    document.getElementById('pnuProgressPercent').textContent = `${percent}%`;
+    document.getElementById('pnuProgressBar').style.width = `${percent}%`;
+    document.getElementById('pnuProgressMatched').textContent = formatNumber(totalMatched);
+    document.getElementById('pnuProgressAmbiguous').textContent = formatNumber(totalAmbiguous);
+    document.getElementById('pnuProgressFailed').textContent = formatNumber(totalFailed);
+    document.getElementById('pnuProgressBatch').textContent = batchCount;
+  };
 
   try {
     while (pnuAutoMatchRunning) {
       batchCount++;
-      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⚡ 배치 #${batchCount} 진행 중...`);
+      updateProgress(`배치 #${batchCount} 처리 중...`);
 
       const result = await callPnuMatcherAPI('batch_match', {
         limit: 100,
@@ -1845,31 +1881,31 @@ async function runPnuQuickMatch() {
       }
 
       const r = result.result || {};
-      // bulk_matched, share_matched도 포함해야 함!
       const batchTotal = (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0) + (r.ambiguous || 0) + (r.failed || 0);
 
       // 처리된 건이 0이면 완료
       if (batchTotal === 0) {
         pnuAutoMatchRunning = false;
-        updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `✅ 완료! (${batchCount}회)`, 'var(--success)');
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        updateProgress(`✅ 완료! ${batchCount}회, ${elapsed}초`);
         break;
       }
 
-      // 누적 통계 업데이트 (bulk_matched, share_matched도 matched에 합산)
+      // 누적 통계
       totalMatched += (r.matched || 0) + (r.bulk_matched || 0) + (r.share_matched || 0);
       totalAmbiguous += r.ambiguous || 0;
       totalFailed += r.failed || 0;
 
-      // 실시간 통계 표시
-      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⏳ 배치 #${batchCount} 완료`);
+      updateProgress(`배치 #${batchCount} 완료`);
 
-      // 1초 대기 후 다음 배치 (API 부하 방지)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 0.5초 대기
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // 사용자가 중지한 경우
     if (!pnuAutoMatchRunning && batchCount > 0) {
-      updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `⏹️ 중지됨 (${batchCount}회)`, 'var(--warning)');
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      updateProgress(`⏹️ 중지됨 (${batchCount}회, ${elapsed}초)`);
     }
 
     // 통계 새로고침
@@ -1877,11 +1913,11 @@ async function runPnuQuickMatch() {
 
   } catch (error) {
     pnuAutoMatchRunning = false;
-    updatePnuResultCard(totalMatched, totalAmbiguous, totalFailed, `❌ 오류: ${error.message}`, 'var(--danger)');
+    updateProgress(`❌ 오류: ${error.message}`);
   } finally {
     pnuAutoMatchRunning = false;
     btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    btnText.textContent = '⚡ 자동 매칭';
+    btnText.textContent = '▶ 자동 매칭 시작';
   }
 }
 
