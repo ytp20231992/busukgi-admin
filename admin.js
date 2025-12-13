@@ -2000,6 +2000,7 @@ async function loadCommercialStats() {
       document.getElementById('commercialStatTotal').textContent = formatNumber(stats.total_commercial_transactions || 0);
       document.getElementById('commercialStatMatched').textContent = formatNumber(stats.matched_count || 0);
       document.getElementById('commercialStatUnmatched').textContent = formatNumber(stats.unmatched_count || 0);
+      document.getElementById('commercialStatNotMasked').textContent = formatNumber(stats.not_masked_count || 0);
       document.getElementById('commercialStatAmbiguous').textContent = formatNumber(stats.ambiguous_count || 0);
       document.getElementById('commercialStatFailed').textContent = formatNumber(stats.failed_count || 0);
       document.getElementById('commercialStatAutoApproved').textContent = formatNumber(stats.auto_approved_count || 0);

@@ -1206,10 +1206,15 @@
               <div class="value" id="commercialStatMatched" style="font-size: 32px; color: var(--success);">-</div>
               <div class="subvalue">PNU 입력 완료</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" style="border-left: 3px solid var(--warning);">
               <div class="label">미처리</div>
               <div class="value" id="commercialStatUnmatched" style="font-size: 32px;">-</div>
               <div class="subvalue">매칭 대기 중 (마스킹)</div>
+            </div>
+            <div class="stat-card" style="border-left: 3px solid #22c55e;">
+              <div class="label">✓ 정상 데이터</div>
+              <div class="value" id="commercialStatNotMasked" style="font-size: 32px; color: #22c55e;">-</div>
+              <div class="subvalue">마스킹 안 됨 (매칭 불필요)</div>
             </div>
             <div class="stat-card" style="border-left: 3px solid var(--warning);">
               <div class="label">⚠️ 중복 후보</div>
