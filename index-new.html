@@ -2033,8 +2033,8 @@
       'settings': '앱 설정'
     };
 
-    // 섹션 전환
-    function switchSection(section) {
+    // 섹션 전환 (전역으로 노출)
+    window.switchSection = function(section) {
       // 네비게이션 아이템 업데이트
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
@@ -2062,8 +2062,8 @@
       }
     }
 
-    // PNU 서브탭 전환
-    function switchPnuSubTab(subtab) {
+    // PNU 서브탭 전환 (전역으로 노출)
+    window.switchPnuSubTab = function(subtab) {
       document.querySelectorAll('.sub-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.subtab === subtab);
       });
