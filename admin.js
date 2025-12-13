@@ -3104,10 +3104,22 @@ async function forceCollectRegion(lawdCd, transactionType, regionName) {
   showSuccess(`🔄 ${regionName} 수집 시작...`);
 
   // 현재 레코드 수 저장
-  const { data: startStatus } = await supabase.rpc('get_region_collection_info', {
-    p_lawd_cd: lawdCd
-  });
-  const startCount = startStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
+  let startCount = 0;
+  try {
+    const rpcResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_region_collection_info`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ p_lawd_cd: lawdCd })
+    });
+    const startStatus = await rpcResponse.json();
+    startCount = startStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
+  } catch (e) {
+    console.error('초기 상태 확인 오류:', e);
+  }
 
   // 버튼 상태 변경 및 진행 모니터링 시작
   const button = event?.target;
@@ -3120,9 +3132,16 @@ async function forceCollectRegion(lawdCd, transactionType, regionName) {
   // 진행 상태 폴링 시작 (5초마다)
   const intervalId = setInterval(async () => {
     try {
-      const { data: currentStatus } = await supabase.rpc('get_region_collection_info', {
-        p_lawd_cd: lawdCd
+      const rpcResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_region_collection_info`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ p_lawd_cd: lawdCd })
       });
+      const currentStatus = await rpcResponse.json();
       const currentCount = currentStatus?.find(s => s.transaction_type === transactionType)?.total_records || 0;
       const newRecords = currentCount - startCount;
 
