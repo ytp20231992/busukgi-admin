@@ -1453,7 +1453,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 style="font-size: 15px; font-weight: 600; color: var(--accent-success);">🏞️ 토지 PNU 자동 매칭</h3>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn btn-success" onclick="runPnuQuickMatch()" id="btnRunPnuQuick">▶ 자동 매칭 시작</button>
+                  <button class="btn btn-success" onclick="runPnuQuickMatch()" id="btnRunPnuQuick"><span id="btnRunPnuQuickText">▶ 자동 매칭 시작</span></button>
                   <button class="btn btn-outline btn-sm" onclick="loadPnuStats()">🔄</button>
                 </div>
               </div>
@@ -1538,7 +1538,7 @@
                     <label>배치 크기</label>
                     <input type="number" id="pnuLimit" value="100" min="1" max="500" style="width: 60px; font-size: 12px;">
                   </div>
-                  <button class="btn btn-primary btn-sm" onclick="runPnuBatchMatch()" id="btnRunPnuMatch">▶ 단일 배치 실행</button>
+                  <button class="btn btn-primary btn-sm" onclick="runPnuBatchMatch()" id="btnRunPnuMatch"><span id="btnRunPnuMatchText">▶ 단일 배치 실행</span></button>
                 </div>
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 12px;">
                   <input type="checkbox" id="pnuDryRun">
@@ -1558,6 +1558,14 @@
               <div class="panel">
                 <div class="panel-header">
                   <span class="panel-title" style="color: var(--accent-warning);">⚠️ 중복 후보</span>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline btn-sm" onclick="fetchOwnershipInfoForAmbiguous()" title="미해결 중복 후보들의 소유권변동 정보 조회">
+                      🔍 소유정보 조회
+                    </button>
+                    <button class="btn btn-outline btn-sm" style="border-color: var(--accent-success); color: var(--accent-success);" onclick="resolveAmbiguousByOwnership()" title="소유권변동일 기반 자동 해결 (high confidence만)">
+                      ✨ 자동 해결
+                    </button>
+                  </div>
                 </div>
                 <div class="panel-body" id="pnuAmbiguousList">
                   <p style="color: var(--text-tertiary); font-size: 12px;">데이터 없음</p>
@@ -1637,8 +1645,8 @@
                     <label>처리 건수</label>
                     <input type="number" id="commercialLimit" value="50" min="1" max="200" style="width: 80px;">
                   </div>
-                  <button class="btn btn-primary" onclick="runCommercialBatchMatch()" id="btnRunCommercialMatch">▶ 배치 실행</button>
-                  <button class="btn btn-success" onclick="runCommercialQuickMatch()" id="btnRunCommercialQuick">⚡ 자동 매칭</button>
+                  <button class="btn btn-primary" onclick="runCommercialBatchMatch()" id="btnRunCommercialMatch"><span id="btnRunCommercialMatchText">▶ 배치 실행</span></button>
+                  <button class="btn btn-success" onclick="runCommercialQuickMatch()" id="btnRunCommercialQuick"><span id="btnRunCommercialQuickText">⚡ 자동 매칭</span></button>
                   <button class="btn btn-outline" onclick="loadCommercialStats()">🔄 새로고침</button>
                 </div>
                 <p style="margin-top: 12px; font-size: 11px; color: var(--text-tertiary);">

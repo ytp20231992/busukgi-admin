@@ -1653,6 +1653,44 @@ function formatNumber(num) {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// 소유권변동 정보 배지 렌더링
+function renderOwnershipBadge(pnu, ownershipInfo) {
+  if (!ownershipInfo || !Array.isArray(ownershipInfo) || ownershipInfo.length === 0) {
+    return '<span style="color: var(--text-tertiary); font-size: 10px; padding: 2px 6px; background: var(--bg-secondary); border-radius: 4px;">소유정보 없음</span>';
+  }
+
+  // 해당 PNU의 소유권 정보 찾기
+  const info = ownershipInfo.find(o => o.pnu === pnu);
+  if (!info) {
+    return '<span style="color: var(--text-tertiary); font-size: 10px; padding: 2px 6px; background: var(--bg-secondary); border-radius: 4px;">변동 없음</span>';
+  }
+
+  const confidenceColors = {
+    high: '#22c55e',    // green
+    medium: '#f59e0b',  // amber
+    low: '#ef4444'      // red
+  };
+  const confidenceLabels = {
+    high: '확실',
+    medium: '유력',
+    low: '불확실'
+  };
+
+  const color = confidenceColors[info.confidence] || '#71717a';
+  const label = confidenceLabels[info.confidence] || '?';
+  const formattedDate = info.changeDate ?
+    `${info.changeDate.slice(0,4)}-${info.changeDate.slice(4,6)}-${info.changeDate.slice(6,8)}` : '-';
+
+  return `
+    <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; padding: 4px 8px; background: ${color}15; border-left: 3px solid ${color}; border-radius: 0 4px 4px 0; font-size: 10px;">
+      <span style="color: ${color}; font-weight: 600;">${info.changeCause || '매매'}</span>
+      <span style="color: var(--text-secondary);">${formattedDate}</span>
+      <span style="color: var(--text-primary); font-weight: 500;">+${info.daysDiff}일</span>
+      <span style="color: ${color}; font-weight: 600; padding: 1px 6px; background: ${color}20; border-radius: 3px;">${label}</span>
+    </div>
+  `;
+}
+
 function renderAmbiguousList(items) {
   const container = document.getElementById('pnuAmbiguousList');
 
@@ -1666,16 +1704,22 @@ function renderAmbiguousList(items) {
   items.slice(0, 10).forEach((item, idx) => {
     const tx = item.molit_land_transactions || {};
     const candidates = item.candidates || [];
+    const ownershipInfo = item.ownership_info || [];
     const createdAt = new Date(item.created_at).toLocaleDateString('ko-KR');
     const regionName = getLawdCodeName(tx.lawd_cd) || tx.lawd_cd || '-';
+
+    // 소유권 정보가 있는 후보 수
+    const ownersFound = ownershipInfo.length;
+    const highConfidence = ownershipInfo.filter(o => o.confidence === 'high').length;
 
     html += `
       <div class="ambiguous-card" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
         <!-- 거래 정보 헤더 -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-weight: 600; color: var(--warning);">거래 #${item.transaction_id}</span>
-            <span style="color: var(--text-secondary); font-size: 11px; margin-left: 8px;">${createdAt}</span>
+            <span style="color: var(--text-secondary); font-size: 11px;">${createdAt}</span>
+            ${ownersFound > 0 ? `<span style="background: var(--success)15; color: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 500;">소유정보 ${ownersFound}건${highConfidence > 0 ? ` (확실 ${highConfidence})` : ''}</span>` : ''}
           </div>
           <button onclick="deleteAmbiguousRecord(${item.id}, ${item.transaction_id})"
                   style="background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;"
@@ -1690,7 +1734,7 @@ function renderAmbiguousList(items) {
             <div><span style="color: var(--text-tertiary);">지역:</span> <strong>${escapeHtml(regionName)}</strong></div>
             <div><span style="color: var(--text-tertiary);">동:</span> <strong>${escapeHtml(tx.umd_nm || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">지번:</span> <strong style="color: var(--warning);">${escapeHtml(tx.jibun || '-')}</strong></div>
-            <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}</strong></div>
+            <div><span style="color: var(--text-tertiary);">거래:</span> <strong>${tx.deal_year || '-'}.${tx.deal_month || '-'}${tx.deal_day ? '.' + tx.deal_day : ''}</strong></div>
             <div><span style="color: var(--text-tertiary);">면적:</span> <strong>${tx.deal_area || '-'}㎡</strong></div>
             <div><span style="color: var(--text-tertiary);">지목:</span> <strong>${escapeHtml(tx.jimok || '-')}</strong></div>
             <div><span style="color: var(--text-tertiary);">용도:</span> <strong>${escapeHtml(tx.land_use || '-')}</strong></div>
@@ -1701,15 +1745,17 @@ function renderAmbiguousList(items) {
         <!-- 후보 목록 -->
         <div style="font-size: 11px;">
           <div style="color: var(--text-secondary); margin-bottom: 6px; font-weight: 500;">후보 필지 (클릭하여 선택):</div>
-          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;">
             ${candidates.map((c, cidx) => {
               const areaDiff = tx.deal_area ? Math.abs(parseFloat(c.lndpclAr) - tx.deal_area).toFixed(1) : '-';
               const areaMatch = tx.deal_area && Math.abs(parseFloat(c.lndpclAr) - tx.deal_area) < 1;
               const jimokMatch = tx.jimok && c.lndcgrCodeNm && tx.jimok === c.lndcgrCodeNm;
+              const ownerInfo = ownershipInfo.find(o => o.pnu === c.pnu);
+              const hasHighConfidence = ownerInfo && ownerInfo.confidence === 'high';
               return `
-                <div style="display: grid; grid-template-columns: 24px 1fr; gap: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
+                <div style="display: grid; grid-template-columns: 24px 1fr; gap: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer; border: 2px solid ${hasHighConfidence ? 'var(--success)' : 'transparent'}; transition: all 0.2s;"
                      onmouseover="this.style.borderColor='var(--accent-cyan)'; this.style.background='var(--bg-secondary)'"
-                     onmouseout="this.style.borderColor='transparent'; this.style.background='var(--bg-tertiary)'"
+                     onmouseout="this.style.borderColor='${hasHighConfidence ? 'var(--success)' : 'transparent'}'; this.style.background='var(--bg-tertiary)'"
                      onclick="selectAmbiguousCandidate(${item.transaction_id}, '${c.pnu}', ${item.id})">
                   <span style="color: var(--text-tertiary); font-weight: 600;">${cidx + 1}</span>
                   <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -1729,6 +1775,8 @@ function renderAmbiguousList(items) {
                       </span>
                       <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-tertiary); font-size: 9px;">${c.pnu}</span>
                     </div>
+                    <!-- 소유권변동 정보 -->
+                    ${renderOwnershipBadge(c.pnu, ownershipInfo)}
                   </div>
                 </div>
               `;
@@ -1753,10 +1801,18 @@ async function selectAmbiguousCandidate(transactionId, pnu, ambiguousId) {
   }
 
   try {
-    // 1. molit_land_transactions 테이블의 pnu 업데이트
+    // 1. molit_land_transactions 테이블의 pnu + match_info 업데이트
     const { error: updateError } = await supabase
       .from('molit_land_transactions')
-      .update({ pnu: pnu })
+      .update({
+        pnu: pnu,
+        match_info: {
+          type: 'manual_selection',  // 수동 선택
+          confidence: 'high',
+          selectedBy: 'admin',
+          matchedAt: new Date().toISOString()
+        }
+      })
       .eq('id', transactionId);
 
     if (updateError) throw updateError;
@@ -1797,6 +1853,93 @@ async function deleteAmbiguousRecord(ambiguousId, transactionId) {
     await loadPnuStats();
   } catch (error) {
     showError('삭제 실패: ' + error.message);
+  }
+}
+
+// 미해결 중복 후보들의 소유권변동 정보 조회 (fetch_ownership_info 액션)
+async function fetchOwnershipInfoForAmbiguous() {
+  if (!confirm('미해결 중복 후보들의 소유권변동 정보를 조회합니다.\n\nVWorld API를 호출하므로 시간이 걸릴 수 있습니다.\n계속하시겠습니까?')) {
+    return;
+  }
+
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ 조회 중...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/land-pnu-matcher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        action: 'fetch_ownership_info',
+        limit: 20  // 한 번에 20건씩 처리 (API 제한 고려)
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'API 오류');
+    }
+
+    showSuccess(`소유정보 조회 완료!\n\n처리: ${result.processed}건\n조회 성공: ${result.found}건\n정보 없음: ${result.not_found}건`);
+    await loadPnuStats();  // 목록 새로고침
+  } catch (error) {
+    showError('소유정보 조회 실패: ' + error.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// 소유권변동일 기반 자동 해결 (resolve_ambiguous_by_ownership 액션)
+async function resolveAmbiguousByOwnership() {
+  if (!confirm('소유권변동일 기반으로 중복 후보를 자동 해결합니다.\n\n※ high confidence (계약일 + 45일 이내 매매) 건만 자동 처리됩니다.\n계속하시겠습니까?')) {
+    return;
+  }
+
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ 처리 중...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/land-pnu-matcher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        action: 'resolve_ambiguous_by_ownership',
+        limit: 50
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'API 오류');
+    }
+
+    const message = `자동 해결 완료!\n\n✅ 해결: ${result.resolved}건\n⏭️ 건너뜀 (수동 검토 필요): ${result.skipped}건`;
+
+    if (result.resolved > 0) {
+      showSuccess(message);
+    } else {
+      alert(message + '\n\n※ 소유정보 조회를 먼저 실행해 주세요.');
+    }
+
+    await loadPnuStats();  // 목록 새로고침
+  } catch (error) {
+    showError('자동 해결 실패: ' + error.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
   }
 }
 
