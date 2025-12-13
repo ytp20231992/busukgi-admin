@@ -1993,8 +1993,8 @@ async function loadCommercialStats() {
   try {
     const result = await callCommercialMatcherAPI('status');
 
-    if (result.stats) {
-      const stats = result.stats;
+    if (result.status) {
+      const stats = result.status;
 
       // 통계 업데이트
       document.getElementById('commercialStatTotal').textContent = formatNumber(stats.total_commercial_transactions || 0);
