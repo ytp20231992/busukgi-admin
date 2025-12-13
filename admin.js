@@ -1886,7 +1886,7 @@ async function fetchOwnershipInfoForAmbiguous() {
       throw new Error(result.error || 'API 오류');
     }
 
-    showSuccess(`소유정보 조회 완료!\n\n처리: ${result.processed}건\n조회 성공: ${result.found}건\n정보 없음: ${result.not_found}건`);
+    showSuccess(`소유정보 조회 완료!\n\n처리: ${result.updated}건${result.message ? '\n' + result.message : ''}`);
     await loadPnuStats();  // 목록 새로고침
   } catch (error) {
     showError('소유정보 조회 실패: ' + error.message);
